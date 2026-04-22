@@ -1,0 +1,134 @@
+from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db import transaction
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse_lazy
+from django.views import View
+from django.views.generic import FormView, ListView, TemplateView
+
+from apps.accounts.models import Role
+from apps.accounts.permissions import user_has_role
+from apps.claims.models import Claim, ClaimAttachment
+from apps.crm.models import CustomerAccount, EndCustomer, Product
+from apps.support.models import Ticket, TicketMessage, TicketPriority, TicketStatus
+from apps.support.utils import default_sla_resolution_deadline, generate_token
+
+from .forms import ClaimSubmissionForm
+
+
+class DistributorRequiredMixin:
+    def dispatch(self, request, *args, **kwargs):
+        if not user_has_role(request.user, Role.DISTRIBUTOR, Role.ADMIN):
+            from django.contrib.auth.views import redirect_to_login
+
+            return redirect_to_login(request.get_full_path())
+        return super().dispatch(request, *args, **kwargs)
+
+
+class PortalHomeView(LoginRequiredMixin, DistributorRequiredMixin, TemplateView):
+    template_name = "portal/home.html"
+
+
+class PortalClaimListView(LoginRequiredMixin, DistributorRequiredMixin, ListView):
+    template_name = "portal/claim_list.html"
+    context_object_name = "claims"
+    paginate_by = 20
+
+    def get_queryset(self):
+        # Demo: distributor sees claims for first linked account or all if admin
+        qs = Claim.objects.select_related("ticket", "product", "customer_account")
+        if self.request.user.role == Role.ADMIN:
+            return qs.order_by("-created_at")
+        account = CustomerAccount.objects.order_by("id").first()
+        if account:
+            return qs.filter(customer_account=account).order_by("-created_at")
+        return qs.none()
+
+
+class PortalClaimSubmitView(LoginRequiredMixin, DistributorRequiredMixin, FormView):
+    template_name = "portal/claim_submit.html"
+    form_class = ClaimSubmissionForm
+    success_url = reverse_lazy("portal_claims")
+
+    def form_valid(self, form):
+        data = form.cleaned_data
+        with transaction.atomic():
+            account = data["customer_account"]
+            product = data["product"]
+            end_customer, _ = EndCustomer.objects.get_or_create(
+                distributor=account,
+                retailer_name=data["retailer_name"],
+                defaults={
+                    "contact_name": data.get("contact_name") or "",
+                    "email": data.get("contact_email") or "",
+                    "phone": data.get("contact_phone") or "",
+                },
+            )
+            ticket = Ticket.objects.create(
+                public_id=generate_token("TKT"),
+                subject=f"Claim — {product.sku}",
+                status=TicketStatus.NEW,
+                priority=TicketPriority.NORMAL,
+                requester=self.request.user,
+                customer_account=account,
+                sla_resolution_at=default_sla_resolution_deadline(TicketPriority.NORMAL),
+            )
+            batch = data.get("batch")
+            claim = Claim.objects.create(
+                public_id=generate_token("CLM"),
+                ticket=ticket,
+                customer_account=account,
+                end_customer=end_customer,
+                po_number=data.get("po_number") or "",
+                invoice_number=data.get("invoice_number") or "",
+                product=product,
+                batch=batch,
+                date_sold=data.get("date_sold"),
+                defect_type=data["defect_type"],
+                quantity_sold=data.get("quantity_sold") or 0,
+                quantity_affected=data.get("quantity_affected") or 0,
+                severity=data["severity"],
+                damage_description=data.get("damage_description") or "",
+                suspected_root_cause_customer=data.get("suspected_root_cause_customer") or "",
+                resolution_requested=data["resolution_requested"],
+            )
+            for f in self.request.FILES.getlist("attachments"):
+                ClaimAttachment.objects.create(
+                    claim=claim,
+                    file=f,
+                    uploaded_by=self.request.user,
+                )
+            TicketMessage.objects.create(
+                ticket=ticket,
+                author=self.request.user,
+                body="Claim submitted via distributor portal.",
+                is_internal=False,
+            )
+        from apps.automation.engine import run_automation_for_ticket
+
+        run_automation_for_ticket(ticket)
+        messages.success(self.request, f"Claim {claim.public_id} submitted.")
+        return super().form_valid(form)
+
+
+class PortalTicketThreadView(LoginRequiredMixin, DistributorRequiredMixin, View):
+    def get(self, request, public_id):
+        ticket = get_object_or_404(Ticket, public_id=public_id)
+        claim = getattr(ticket, "claim", None)
+        return render(
+            request,
+            "portal/ticket_thread.html",
+            {"ticket": ticket, "claim": claim, "messages": ticket.messages.all()},
+        )
+
+    def post(self, request, public_id):
+        ticket = get_object_or_404(Ticket, public_id=public_id)
+        body = (request.POST.get("body") or "").strip()
+        if body:
+            TicketMessage.objects.create(
+                ticket=ticket,
+                author=request.user,
+                body=body,
+                is_internal=False,
+            )
+        return redirect("portal_ticket", public_id=public_id)

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="flex min-h-full">
+  <aside class="hidden w-64 shrink-0 border-r border-zinc-200/80 bg-white/90 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/90 lg:block">
+    <div class="flex h-14 items-center gap-2 border-b border-zinc-100 px-5 dark:border-zinc-800">
+      <div class="h-8 w-8 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 shadow-soft"></div>
+      <div>
+        <div class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Nexus</div>
+        <div class="text-sm font-semibold">Resolve</div>
+      </div>
+    </div>
+    <nav class="space-y-1 p-3 text-sm">
+      <a href="{% url 'support_inbox' %}" class="flex items-center gap-2 rounded-xl px-3 py-2 font-medium text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800">Inbox</a>
+      <a href="{% url 'executive_dashboard' %}" class="flex items-center gap-2 rounded-xl px-3 py-2 font-medium text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800">Dashboards</a>
+      <a href="{% url 'portal_home' %}" class="flex items-center gap-2 rounded-xl px-3 py-2 font-medium text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800">Portal</a>
+      <a href="/admin/" class="flex items-center gap-2 rounded-xl px-3 py-2 font-medium text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800">Configuration</a>
+    </nav>
+    <div class="mt-auto border-t border-zinc-100 p-3 dark:border-zinc-800">
+      <button type="button" onclick="window.nexusToggleDark()" class="w-full rounded-xl border border-zinc-200 px-3 py-2 text-xs font-medium text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800">Toggle theme</button>
+      <div class="mt-2 truncate px-1 text-xs text-zinc-500">{{ request.user.username }}</div>
+    </div>
+  </aside>
+  <div class="flex min-w-0 flex-1 flex-col">
+    <header class="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-zinc-200/80 bg-white/80 px-4 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/80">
+      <div class="flex items-center gap-3">
+        <span class="text-sm font-medium text-zinc-500">⌘K command palette</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <a href="{% url 'logout' %}" class="rounded-xl px-3 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800">Sign out</a>
+      </div>
+    </header>
+    <main class="flex-1 p-4 lg:p-8">
+      {% block main %}{% endblock %}
+    </main>
+  </div>
+</div>
+{% endblock %}

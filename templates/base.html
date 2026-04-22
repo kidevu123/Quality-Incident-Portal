@@ -1,0 +1,72 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Nexus Resolve{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+          boxShadow: {
+            'soft': '0 1px 2px 0 rgb(0 0 0 / 0.04), 0 8px 24px -4px rgb(0 0 0 / 0.08)',
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    html { font-feature-settings: "cv02","cv03","cv04","cv11"; }
+    .skeleton { animation: pulse 1.5s ease-in-out infinite; background: linear-gradient(90deg,#f4f4f5 25%,#e4e4e7 37%,#f4f4f5 63%); background-size: 400% 100%; }
+    @keyframes pulse { 0%{background-position:100% 50%} 100%{background-position:0 50%} }
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="h-full bg-zinc-50 text-zinc-900 antialiased dark:bg-zinc-950 dark:text-zinc-100">
+  {% if messages %}
+  <div class="fixed right-4 top-4 z-50 flex flex-col gap-2">
+    {% for message in messages %}
+    <div class="rounded-2xl border border-zinc-200/80 bg-white px-4 py-3 text-sm shadow-soft dark:border-zinc-800 dark:bg-zinc-900">
+      {{ message }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% block body %}{% endblock %}
+  <div id="cmdk" class="hidden fixed inset-0 z-[100] items-start justify-center bg-black/40 pt-24 backdrop-blur-sm" role="dialog">
+    <div class="w-full max-w-lg rounded-2xl border border-zinc-200 bg-white p-2 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900">
+      <input id="cmdk-input" type="search" placeholder="Quick actions…" class="w-full rounded-xl border-0 bg-zinc-50 px-4 py-3 text-sm outline-none ring-1 ring-zinc-200 focus:ring-2 focus:ring-violet-500 dark:bg-zinc-950 dark:ring-zinc-800" autocomplete="off">
+      <ul class="mt-2 max-h-72 overflow-auto text-sm">
+        <li><a data-cmdk href="{% url 'support_inbox' %}" class="block rounded-xl px-3 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-800">Inbox</a></li>
+        <li><a data-cmdk href="{% url 'executive_dashboard' %}" class="block rounded-xl px-3 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-800">Executive dashboard</a></li>
+        <li><a data-cmdk href="{% url 'portal_home' %}" class="block rounded-xl px-3 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-800">Distributor portal</a></li>
+        <li><a data-cmdk href="/admin/" class="block rounded-xl px-3 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-800">Admin configuration</a></li>
+      </ul>
+    </div>
+  </div>
+  <script>
+    (function () {
+      const root = document.documentElement;
+      const cmdk = document.getElementById('cmdk');
+      const input = document.getElementById('cmdk-input');
+      function toggleDark() { root.classList.toggle('dark'); localStorage.setItem('theme', root.classList.contains('dark') ? 'dark' : 'light'); }
+      if (localStorage.getItem('theme') === 'dark') root.classList.add('dark');
+      window.addEventListener('keydown', function (e) {
+        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); cmdk.classList.remove('hidden'); cmdk.classList.add('flex'); input.focus(); }
+        if (e.key === 'Escape') { cmdk.classList.add('hidden'); cmdk.classList.remove('flex'); }
+      });
+      cmdk.addEventListener('click', function (ev) { if (ev.target === cmdk) { cmdk.classList.add('hidden'); cmdk.classList.remove('flex'); } });
+      document.querySelectorAll('[data-cmdk]').forEach(function (a) { a.addEventListener('click', function () { cmdk.classList.add('hidden'); cmdk.classList.remove('flex'); }); });
+      window.nexusToggleDark = toggleDark;
+    })();
+  </script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

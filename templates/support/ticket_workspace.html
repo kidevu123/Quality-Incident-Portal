@@ -1,0 +1,94 @@
+{% extends "support/app_shell.html" %}
+{% block title %}{{ ticket.public_id }} — Nexus{% endblock %}
+{% block main %}
+<div class="mx-auto max-w-[1600px]">
+  <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <div class="text-xs font-medium uppercase tracking-wide text-zinc-500">Ticket workspace</div>
+      <h1 class="text-xl font-semibold tracking-tight">{{ ticket.public_id }}</h1>
+      <p class="text-sm text-zinc-500">{{ ticket.subject }}</p>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <a href="{% url 'customer_360' ticket.customer_account_id %}" class="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-medium shadow-sm hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800">Account 360</a>
+    </div>
+  </div>
+  <div class="grid gap-4 lg:grid-cols-12">
+    <section class="lg:col-span-3 space-y-3">
+      <div class="rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-soft dark:border-zinc-800 dark:bg-zinc-900">
+        <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Queues & routing</h2>
+        <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-300">Macros, escalations, and filters plug in here via admin configuration.</p>
+      </div>
+      <div class="rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-soft dark:border-zinc-800 dark:bg-zinc-900">
+        <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Status</h2>
+        <form method="post" class="mt-3 space-y-2">
+          {% csrf_token %}
+          <select name="status" class="w-full rounded-xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950">
+            {% for val,label in ticket_statuses %}
+            <option value="{{ val }}" {% if ticket.status == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+          <button class="w-full rounded-xl bg-zinc-900 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-900">Update status</button>
+        </form>
+      </div>
+    </section>
+    <section class="lg:col-span-6 space-y-4">
+      <div class="rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-soft dark:border-zinc-800 dark:bg-zinc-900">
+        <h2 class="text-sm font-semibold">Conversation</h2>
+        <div class="mt-4 max-h-[480px] space-y-3 overflow-y-auto pr-1">
+          {% for m in ticket.messages.all %}
+          <div class="rounded-2xl border px-3 py-2 text-sm {% if m.is_internal %}border-amber-200 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-950/30{% else %}border-zinc-100 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950/40{% endif %}">
+            <div class="flex justify-between text-xs text-zinc-500">
+              <span>{% if m.author %}{{ m.author.username }}{% else %}System{% endif %}</span>
+              <span>{{ m.created_at }}</span>
+            </div>
+            <div class="mt-1 whitespace-pre-wrap">{{ m.body }}</div>
+          </div>
+          {% empty %}
+          <p class="text-sm text-zinc-500">No messages yet.</p>
+          {% endfor %}
+        </div>
+        <form method="post" class="mt-4 space-y-2 border-t border-zinc-100 pt-4 dark:border-zinc-800">
+          {% csrf_token %}
+          <textarea name="body" rows="3" class="w-full rounded-2xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950" placeholder="Reply to customer…"></textarea>
+          <label class="flex items-center gap-2 text-xs text-zinc-500"><input type="checkbox" name="internal" value="1"> Internal note</label>
+          <button class="rounded-xl bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500">Send</button>
+        </form>
+      </div>
+    </section>
+    <section class="lg:col-span-3 space-y-3">
+      {% with c=ticket.claim %}
+      {% if c %}
+      <div class="rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-soft dark:border-zinc-800 dark:bg-zinc-900">
+        <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Claim</h2>
+        <dl class="mt-3 space-y-2 text-sm">
+          <div class="flex justify-between gap-2"><dt class="text-zinc-500">Claim ID</dt><dd class="font-medium">{{ c.public_id }}</dd></div>
+          <div class="flex justify-between gap-2"><dt class="text-zinc-500">SKU</dt><dd>{{ c.product.sku }}</dd></div>
+          <div class="flex justify-between gap-2"><dt class="text-zinc-500">Batch</dt><dd>{% if c.batch %}{{ c.batch.lot_number }}{% else %}—{% endif %}</dd></div>
+          <div class="flex justify-between gap-2"><dt class="text-zinc-500">Exposure</dt><dd>${{ c.estimated_exposure }}</dd></div>
+          <div class="flex justify-between gap-2"><dt class="text-zinc-500">Zoho SO</dt><dd class="truncate">{{ c.zoho_replacement_so_number|default:"—" }}</dd></div>
+        </dl>
+        <form method="post" class="mt-4">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="zoho_replacement">
+          <button type="submit" class="w-full rounded-xl bg-emerald-600 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500">Create replacement sales order</button>
+        </form>
+        <p class="mt-2 text-xs text-zinc-500">Approval gates apply above configured threshold. Duplicates blocked by idempotency fingerprint.</p>
+      </div>
+      {% endif %}
+      {% endwith %}
+      <div class="rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-soft dark:border-zinc-800 dark:bg-zinc-900">
+        <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Zoho sync</h2>
+        <ul class="mt-2 max-h-40 space-y-2 overflow-y-auto text-xs text-zinc-600 dark:text-zinc-300">
+          {% if ticket.claim %}
+          {% for z in ticket.claim.zoho_logs.all|slice:":8" %}
+          <li class="rounded-lg bg-zinc-50 px-2 py-1 dark:bg-zinc-950/50">{{ z.action }} — {{ z.status }} — {{ z.created_at }}</li>
+          {% empty %}
+          <li>No sync events.</li>
+          {% endfor %}
+          {% endif %}
+        </ul>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}
