@@ -110,3 +110,25 @@ Archive the Docker volume `media_volume` or bind-mount to a ZFS dataset with sna
 - Add virus scanning and content-type validation for uploads; consider private object storage (S3-compatible) with signed URLs.
 
 Further reading: `docs/WIREFRAMES.md`, `docs/SECURITY_CHECKLIST.md`, `docs/PHASE2_ROADMAP.md`.
+
+## Git / GitHub
+
+This repo may use a **separate Git directory** (`nexus-resolve.git/`, referenced by the `.git` file) so tooling that blocks `.git/hooks` can still commit. Do not delete `nexus-resolve.git/` unless you re-init Git.
+
+**Push to GitHub** (run on your Mac in Terminal, where DNS and `gh`/SSH work):
+
+```bash
+cd /Users/kidevu/nexus-support
+gh auth login -h github.com   # if `gh auth status` shows an invalid token
+gh repo create nexus-resolve --public --source=. --remote=origin --push
+# or add `git@github.com:YOUR_USER/nexus-resolve.git` and: git push -u origin main
+```
+
+To use a normal `.git` folder instead:
+
+```bash
+cd /Users/kidevu/nexus-support
+rm .git
+mv nexus-resolve.git .git
+git status
+```
