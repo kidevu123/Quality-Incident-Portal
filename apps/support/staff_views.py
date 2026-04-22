@@ -1,8 +1,10 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.views import redirect_to_login
 from django.db.models import Count, Sum
 from django.shortcuts import redirect
 from django.urls import reverse
+from django.views import View
 from django.views.generic import DetailView, ListView, TemplateView
 
 from apps.accounts.models import Role
@@ -22,6 +24,36 @@ class StaffUserMixin(UserPassesTestMixin):
             Role.FINANCE,
             Role.ADMIN,
         )
+
+    def handle_no_permission(self):
+        # AccessMixin raises PermissionDenied(403) whenever is_authenticated is True unless we
+        # return a response here — never call super() for logged-in users.
+        user = self.request.user
+        if user.is_authenticated:
+            if user_has_role(user, Role.AGENT, Role.QUALITY, Role.FINANCE, Role.ADMIN):
+                return redirect(reverse("support_inbox"))
+            return redirect(reverse("portal_home"))
+        return redirect_to_login(self.request.get_full_path(), login_url=reverse("login"))
+
+
+class SupportInboxEntryView(View):
+    """
+    Routes `/` without UserPassesTestMixin so anonymous and distributors never hit Django's
+    authenticated 403 path (see AccessMixin.handle_no_permission).
+    """
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect_to_login(request.get_full_path(), login_url=reverse("login"))
+        if not user_has_role(
+            request.user,
+            Role.AGENT,
+            Role.QUALITY,
+            Role.FINANCE,
+            Role.ADMIN,
+        ):
+            return redirect(reverse("portal_home"))
+        return SupportInboxView.as_view()(request, *args, **kwargs)
 
 
 class SupportInboxView(LoginRequiredMixin, StaffUserMixin, ListView):

@@ -5,6 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Nexus Resolve{% endblock %}</title>
+  <link rel="icon" href="{% static 'favicon.svg' %}" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -29,7 +30,7 @@
   </style>
   {% block extra_head %}{% endblock %}
 </head>
-<body class="h-full bg-zinc-50 text-zinc-900 antialiased dark:bg-zinc-950 dark:text-zinc-100">
+<body class="flex h-full min-h-screen flex-col bg-zinc-50 text-zinc-900 antialiased dark:bg-zinc-950 dark:text-zinc-100">
   {% if messages %}
   <div class="fixed right-4 top-4 z-50 flex flex-col gap-2">
     {% for message in messages %}
@@ -39,7 +40,13 @@
     {% endfor %}
   </div>
   {% endif %}
+  <div class="flex flex-1 flex-col">
   {% block body %}{% endblock %}
+  </div>
+  <footer class="mt-auto border-t border-zinc-200/80 bg-white/80 px-4 py-4 text-center text-xs text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950/80 dark:text-zinc-400">
+    <p class="font-medium text-zinc-600 dark:text-zinc-300">Made with love — Haute Brands</p>
+    <p class="mt-1 tabular-nums text-zinc-400 dark:text-zinc-500">Nexus Resolve v{{ nexus_app_version }}</p>
+  </footer>
   <div id="cmdk" class="hidden fixed inset-0 z-[100] items-start justify-center bg-black/40 pt-24 backdrop-blur-sm" role="dialog">
     <div class="w-full max-w-lg rounded-2xl border border-zinc-200 bg-white p-2 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900">
       <input id="cmdk-input" type="search" placeholder="Quick actions…" class="w-full rounded-xl border-0 bg-zinc-50 px-4 py-3 text-sm outline-none ring-1 ring-zinc-200 focus:ring-2 focus:ring-violet-500 dark:bg-zinc-950 dark:ring-zinc-800" autocomplete="off">

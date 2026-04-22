@@ -9,16 +9,18 @@
         <div class="text-lg font-semibold">Sign in</div>
       </div>
     </div>
-    <form method="post" class="space-y-4">
+    <form method="post" class="space-y-4" action="{% url 'login' %}">
       {% csrf_token %}
       {% if form.non_field_errors %}<div class="text-sm text-rose-600">{{ form.non_field_errors }}</div>{% endif %}
       <div>
         <label class="text-xs font-medium text-zinc-500">Username</label>
-        <input name="username" class="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950" autofocus>
+        <input name="username" value="{{ form.username.value|default:'' }}" class="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950" autofocus autocomplete="username">
+        {% if form.username.errors %}<p class="mt-1 text-xs text-rose-600">{{ form.username.errors.0 }}</p>{% endif %}
       </div>
       <div>
         <label class="text-xs font-medium text-zinc-500">Password</label>
-        <input type="password" name="password" class="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950">
+        <input type="password" name="password" class="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950" autocomplete="current-password">
+        {% if form.password.errors %}<p class="mt-1 text-xs text-rose-600">{{ form.password.errors.0 }}</p>{% endif %}
       </div>
       <button class="w-full rounded-xl bg-zinc-900 py-2.5 text-sm font-semibold text-white dark:bg-white dark:text-zinc-900">Continue</button>
     </form>

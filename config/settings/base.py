@@ -4,6 +4,8 @@ from pathlib import Path
 
 import environ
 
+from config.version import VERSION as NEXUS_VERSION_DEFAULT
+
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 env = environ.Env(
     DJANGO_DEBUG=(bool, False),
@@ -11,6 +13,9 @@ env = environ.Env(
 )
 
 environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
+
+# Shown in the site footer; override per environment with NEXUS_APP_VERSION (e.g. CI git sha).
+NEXUS_APP_VERSION = env("NEXUS_APP_VERSION", default=NEXUS_VERSION_DEFAULT)
 
 SECRET_KEY = env("DJANGO_SECRET_KEY", default="change-me-in-production-not-for-deploy")
 DEBUG = env.bool("DJANGO_DEBUG", default=False)
@@ -66,6 +71,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "config.context_processors.nexus_release",
             ],
         },
     },

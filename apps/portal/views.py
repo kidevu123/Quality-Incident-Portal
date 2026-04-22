@@ -2,14 +2,14 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.views import View
 from django.views.generic import FormView, ListView, TemplateView
 
 from apps.accounts.models import Role
 from apps.accounts.permissions import user_has_role
 from apps.claims.models import Claim, ClaimAttachment
-from apps.crm.models import CustomerAccount, EndCustomer, Product
+from apps.crm.models import Batch, CustomerAccount, EndCustomer, Manufacturer, Product
 from apps.support.models import Ticket, TicketMessage, TicketPriority, TicketStatus
 from apps.support.utils import default_sla_resolution_deadline, generate_token
 
@@ -19,9 +19,11 @@ from .forms import ClaimSubmissionForm
 class DistributorRequiredMixin:
     def dispatch(self, request, *args, **kwargs):
         if not user_has_role(request.user, Role.DISTRIBUTOR, Role.ADMIN):
+            if request.user.is_authenticated:
+                return redirect(reverse("support_inbox"))
             from django.contrib.auth.views import redirect_to_login
 
-            return redirect_to_login(request.get_full_path())
+            return redirect_to_login(request.get_full_path(), login_url=reverse("login"))
         return super().dispatch(request, *args, **kwargs)
 
 
@@ -50,11 +52,25 @@ class PortalClaimSubmitView(LoginRequiredMixin, DistributorRequiredMixin, FormVi
     form_class = ClaimSubmissionForm
     success_url = reverse_lazy("portal_claims")
 
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["customer_account_suggestions"] = list(
+            CustomerAccount.objects.order_by("name").values_list("name", flat=True)[:800]
+        )
+        ctx["product_sku_suggestions"] = list(
+            Product.objects.order_by("sku").values_list("sku", flat=True)[:2000]
+        )
+        ctx["batch_lot_suggestions"] = list(
+            Batch.objects.order_by("-manufactured_on").values_list("lot_number", flat=True)[:1500]
+        )
+        return ctx
+
     def form_valid(self, form):
         data = form.cleaned_data
+        account = form._resolved_customer_account
+        product = form._resolved_product
+        batch = form._resolved_batch
         with transaction.atomic():
-            account = data["customer_account"]
-            product = data["product"]
             end_customer, _ = EndCustomer.objects.get_or_create(
                 distributor=account,
                 retailer_name=data["retailer_name"],
@@ -73,7 +89,6 @@ class PortalClaimSubmitView(LoginRequiredMixin, DistributorRequiredMixin, FormVi
                 customer_account=account,
                 sla_resolution_at=default_sla_resolution_deadline(TicketPriority.NORMAL),
             )
-            batch = data.get("batch")
             claim = Claim.objects.create(
                 public_id=generate_token("CLM"),
                 ticket=ticket,

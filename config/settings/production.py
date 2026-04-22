@@ -16,6 +16,13 @@ SECURE_SSL_REDIRECT = env.bool("SECURE_SSL_REDIRECT", default=False)
 SESSION_COOKIE_SECURE = env.bool("SESSION_COOKIE_SECURE", default=False)
 CSRF_COOKIE_SECURE = env.bool("CSRF_COOKIE_SECURE", default=False)
 
+# If True, force non-secure cookies so sessions work over plain http:// (e.g. LAN IP to nginx).
+# When SESSION_COOKIE_SECURE=True but you open http://192.168.x.x/, the browser will not store
+# the session cookie and login appears to loop. Use HTTPS, or set this True for trusted LAN HTTP.
+if env.bool("DJANGO_HTTP_SAFE_COOKIES", default=False):
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+
 if env.bool("BEHIND_TLS_PROXY", default=False):
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
