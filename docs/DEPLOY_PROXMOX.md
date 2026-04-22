@@ -111,6 +111,18 @@ nano .env   # or vim
 
 ## 5. Build and start
 
+**Automated (on the server as `root`)** — installs Docker if needed, clones the repo, writes `.env`, starts Compose:
+
+```bash
+apt-get update && apt-get install -y git
+cd /opt && git clone https://github.com/kidevu123/Quality-Incident-Portal.git nexus-resolve
+cd nexus-resolve && bash scripts/proxmox-node-deploy.sh
+```
+
+Optional: `NEXUS_EXTRA_ALLOWED_HOSTS=192.168.1.x,your.domain.com bash scripts/proxmox-node-deploy.sh`
+
+**Manual:**
+
 ```bash
 cd /opt/nexus-resolve
 docker compose build --no-cache
