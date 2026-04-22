@@ -113,15 +113,24 @@ Further reading: `docs/WIREFRAMES.md`, `docs/SECURITY_CHECKLIST.md`, `docs/PHASE
 
 ## Git / GitHub
 
+Upstream: **https://github.com/kidevu123/Quality-Incident-Portal** (`git@github.com:kidevu123/Quality-Incident-Portal.git`).
+
 This repo may use a **separate Git directory** (`nexus-resolve.git/`, referenced by the `.git` file) so tooling that blocks `.git/hooks` can still commit. Do not delete `nexus-resolve.git/` unless you re-init Git.
 
-**Push to GitHub** (run on your Mac in Terminal, where DNS and `gh`/SSH work):
+**Push** (from your machine — Cursor’s agent cannot reach GitHub):
 
 ```bash
 cd /Users/kidevu/nexus-support
-gh auth login -h github.com   # if `gh auth status` shows an invalid token
-gh repo create nexus-resolve --public --source=. --remote=origin --push
-# or add `git@github.com:YOUR_USER/nexus-resolve.git` and: git push -u origin main
+git remote -v   # expect origin → git@github.com:kidevu123/Quality-Incident-Portal.git
+git push -u origin main
+```
+
+If GitHub already has commits (e.g. initial README) and push is rejected:
+
+```bash
+git pull origin main --allow-unrelated-histories
+# resolve any conflicts, then:
+git push -u origin main
 ```
 
 To use a normal `.git` folder instead:
