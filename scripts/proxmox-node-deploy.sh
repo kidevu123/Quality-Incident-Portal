@@ -24,8 +24,12 @@ echo "NOTE: Prefer a dedicated VM/LXC for Docker; running on the Proxmox node is
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -qq
-apt-get install -y -qq docker.io docker-compose-v2 git curl ca-certificates python3
-systemctl enable --now docker
+apt-get install -y -qq git curl ca-certificates python3
+# Debian docker.io includes Compose v2 as `docker compose` (no separate docker-compose-v2 package).
+if ! command -v docker >/dev/null 2>&1 || ! docker compose version >/dev/null 2>&1; then
+  apt-get install -y -qq docker.io
+  systemctl enable --now docker
+fi
 
 mkdir -p "$NEXUS_INSTALL_DIR"
 cd "$NEXUS_INSTALL_DIR"
@@ -74,6 +78,11 @@ t = re.sub(
 )
 t = re.sub(r"^DJANGO_ALLOWED_HOSTS=.*$", "DJANGO_ALLOWED_HOSTS=" + os.environ["ALLOWED"], t, flags=re.M)
 t = re.sub(r"^NEXUS_HTTP_PORT=.*$", "NEXUS_HTTP_PORT=" + os.environ["NEXUS_HTTP_PORT"], t, flags=re.M)
+# Docker Compose reads POSTGRES_* from .env for the db container; must match DATABASE_URL.
+if not re.search(r"^POSTGRES_PASSWORD=", t, re.M):
+    t = t.rstrip() + "\nPOSTGRES_USER=nexus\nPOSTGRES_PASSWORD=" + os.environ["DB_PASS"] + "\nPOSTGRES_DB=nexus\n"
+else:
+    t = re.sub(r"^POSTGRES_PASSWORD=.*$", "POSTGRES_PASSWORD=" + os.environ["DB_PASS"], t, flags=re.M)
 p.write_text(t)
 PY
 

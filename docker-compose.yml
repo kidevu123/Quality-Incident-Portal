@@ -7,6 +7,9 @@ services:
   db:
     image: postgres:16-alpine
     restart: unless-stopped
+    # Proxmox + AppArmor: can block Postgres Unix sockets; unconfined restores default behavior.
+    security_opt:
+      - apparmor=unconfined
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-nexus}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nexus}
@@ -14,7 +17,8 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-nexus} -d ${POSTGRES_DB:-nexus}"]
+      # Force TCP — matches Docker networks when Unix socket is unavailable.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U ${POSTGRES_USER:-nexus} -d ${POSTGRES_DB:-nexus}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -51,12 +55,13 @@ services:
     expose:
       - "8000"
     healthcheck:
+      # Login page always exists (avoids depending on optional /health routes in older trees).
       test:
         [
           "CMD",
           "python",
           "-c",
-          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/live/', timeout=5).read()",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/accounts/login/', timeout=5)",
         ]
       interval: 20s
       timeout: 10s

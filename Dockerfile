@@ -13,7 +13,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
-RUN chmod +x scripts/entrypoint.sh
+RUN mkdir -p /app/static && chmod +x scripts/entrypoint.sh
 
 ENV DJANGO_SETTINGS_MODULE=config.settings.production
 
