@@ -2,6 +2,20 @@
 
 Production-oriented **B2B distributor support platform**: Zendesk-style agent workspace, distributor portal, claims/RMA/reimbursement workflows, quality incidents, batch traceability hooks, rule-based automation, executive dashboards, audit logging, and a **first-class Zoho** integration layer (OAuth refresh, replacement sales order push with approval gates, dedupe, sync logs, Celery retries).
 
+## Deploy on Proxmox / Docker
+
+The stack is **ready to deploy** with Docker Compose (PostgreSQL, Redis, Gunicorn, Celery, Nginx, health checks, migrations on boot). Step-by-step **Proxmox VM setup, firewall, `.env`, TLS, backups, and upgrades** are in **[`docs/DEPLOY_PROXMOX.md`](docs/DEPLOY_PROXMOX.md)**.
+
+Quick path on a Linux host with Docker:
+
+```bash
+cp .env.example .env   # edit secrets and DATABASE_URL (host `db` inside Compose)
+docker compose build --no-cache && docker compose up -d
+docker compose exec web python manage.py createsuperuser
+```
+
+---
+
 ## Stack
 
 - Django 4.2 LTS (Python 3.9+; Docker image uses 3.12)

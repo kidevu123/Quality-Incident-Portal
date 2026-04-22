@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     "apps.auditlog",
     "apps.portal",
     "apps.api",
+    "apps.core_health",
 ]
 
 MIDDLEWARE = [
