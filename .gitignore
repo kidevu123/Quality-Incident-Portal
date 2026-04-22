@@ -1,3 +1,6 @@
+# Git directory when using separate gitdir (see README)
+nexus-resolve.git/
+
 .venv/
 __pycache__/
 *.py[cod]
