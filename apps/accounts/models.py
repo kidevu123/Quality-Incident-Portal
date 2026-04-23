@@ -15,6 +15,13 @@ class User(AbstractUser):
     phone = models.CharField(max_length=64, blank=True)
     avatar_url = models.URLField(blank=True)
     preferences = models.JSONField(default=dict, blank=True)
+    telegram_chat_id = models.BigIntegerField(
+        null=True,
+        blank=True,
+        unique=True,
+        db_index=True,
+        help_text="Telegram chat id for personal notifications (from /start deep link).",
+    )
 
     class Meta:
         ordering = ["username"]

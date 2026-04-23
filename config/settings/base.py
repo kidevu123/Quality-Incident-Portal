@@ -165,7 +165,21 @@ AUTO_APPROVE_MAX_AMOUNT = env.float("AUTO_APPROVE_MAX_AMOUNT", default=250.0)
 
 # Telegram — optional portal claim alerts (BotFather token + numeric chat IDs, comma-separated)
 TELEGRAM_BOT_TOKEN = env("TELEGRAM_BOT_TOKEN", default="")
+# Bot @username without @ — used for deep links (t.me/<username>?start=…)
+TELEGRAM_BOT_USERNAME = env("TELEGRAM_BOT_USERNAME", default="")
 TELEGRAM_CHAT_IDS = env.list("TELEGRAM_CHAT_IDS", default=[])
+# Optional: set when calling setWebhook; Telegram sends X-Telegram-Bot-Api-Secret-Token
+TELEGRAM_WEBHOOK_SECRET = env("TELEGRAM_WEBHOOK_SECRET", default="")
+
+# Link tokens + webhook should use Redis in production (shared across Gunicorn workers)
+REDIS_CACHE_URL = env("REDIS_CACHE_URL", default="")
+if REDIS_CACHE_URL:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": REDIS_CACHE_URL,
+        }
+    }
 
 FILE_UPLOAD_MAX_MEMORY_SIZE = 25 * 1024 * 1024
 DATA_UPLOAD_MAX_MEMORY_SIZE = 30 * 1024 * 1024
