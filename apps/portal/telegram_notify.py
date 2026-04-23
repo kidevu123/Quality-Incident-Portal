@@ -18,6 +18,13 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+# Linked Telegram users with these roles (or superuser) get new portal-claim pings.
+_PORTAL_CLAIM_NOTIFY_ROLES = (
+    Role.ADMIN,
+    Role.AGENT,
+    Role.QUALITY,
+)
+
 
 def _tg_h(s: str) -> str:
     """Escape text for Telegram HTML parse_mode."""
@@ -47,7 +54,7 @@ def collect_portal_claim_notification_chat_ids() -> list[str]:
     """
     Recipients for new portal claims:
     - TELEGRAM_CHAT_IDS from env (e.g. group chat, or your personal id)
-    - Plus every superuser or Administrator who linked Telegram (telegram_chat_id)
+    - Plus every superuser or internal role in _PORTAL_CLAIM_NOTIFY_ROLES who linked Telegram
     """
     ids: list[str] = []
     seen: set[str] = set()
@@ -63,8 +70,9 @@ def collect_portal_claim_notification_chat_ids() -> list[str]:
         add(raw)
 
     qs = User.objects.filter(
-        Q(is_superuser=True) | Q(role=Role.ADMIN),
+        Q(is_superuser=True) | Q(role__in=_PORTAL_CLAIM_NOTIFY_ROLES),
         telegram_chat_id__isnull=False,
+        is_active=True,
     ).values_list("telegram_chat_id", flat=True)
     for cid in qs:
         add(cid)

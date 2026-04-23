@@ -63,7 +63,7 @@ class TelegramWebhookView(View):
                     User.objects.filter(pk=uid).update(telegram_chat_id=cid)
                     send_telegram_plain_text(
                         str(cid),
-                        "<b>Nexus Resolve</b>\nThis chat is linked to your account. New distributor claim alerts appear here if you are an Administrator or superuser.",
+                        "<b>Nexus Resolve</b>\nThis chat is linked to your account. New distributor claim alerts appear here for Support Agent, Quality Manager, Administrator, and superuser roles.",
                         parse_mode="HTML",
                     )
                 else:

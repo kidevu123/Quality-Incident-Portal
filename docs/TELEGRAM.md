@@ -5,9 +5,9 @@ New distributor claims (`/portal/claims/new/`) can trigger Telegram messages.
 ## Who receives claim alerts?
 
 1. **Every chat ID** listed in `TELEGRAM_CHAT_IDS` (comma-separated). Use this for a **group/supergroup**, or your **personal numeric ID**, so you (the owner) always get every claim without linking in the UI.
-2. **Plus** every user who is a **superuser** or has role **Administrator** and has linked Telegram on **`/accounts/telegram/`** (their personal `telegram_chat_id`).
+2. **Plus** every **active** user who is a **superuser** or has role **Support Agent**, **Quality Manager**, or **Administrator** and has linked Telegram on **`/accounts/telegram/`** (their personal `telegram_chat_id`).
 
-Distributors or agents who link Telegram do **not** get claim pings unless they are Administrator/superuser.
+**Distributors** and **Finance** users do **not** get claim pings from this path (even if they somehow open the link). **Finance** is excluded; add them via `TELEGRAM_CHAT_IDS` if needed.
 
 ## 1. Create the bot
 
@@ -59,7 +59,7 @@ If binding fails, check webhook info, HTTPS, and that `REDIS_CACHE_URL` is set f
 ## 5. Owner: see all notifications
 
 - Put your personal chat ID (or a team **supergroup** ID) in **`TELEGRAM_CHAT_IDS`** so every claim is copied there, **or**
-- Use an **Administrator** / **superuser** account and link Telegram on `/accounts/telegram/`.
+- Use a **Support Agent**, **Quality Manager**, **Administrator**, or **superuser** account and link Telegram on `/accounts/telegram/`.
 
 You can use **both** (group + linked admin) without duplicate suppression—duplicate chat IDs are deduplicated when sending.
 
