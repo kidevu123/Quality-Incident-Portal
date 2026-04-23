@@ -5,6 +5,13 @@
   <h1 class="text-2xl font-semibold">Telegram claim alerts</h1>
   <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">Link Telegram to get pinged when a distributor submits a claim. <strong>Support Agents</strong>, <strong>Quality Managers</strong>, <strong>Administrators</strong>, and <strong>superusers</strong> who link here are notified automatically. You can also add a group chat or extra personal IDs in <code class="rounded bg-zinc-100 px-1 dark:bg-zinc-800">TELEGRAM_CHAT_IDS</code> on the server.</p>
 
+  <div class="mt-6 rounded-2xl border border-violet-200/80 bg-violet-50/50 p-4 text-sm text-zinc-700 dark:border-violet-900/40 dark:bg-violet-950/25 dark:text-zinc-300">
+    <h2 class="text-xs font-semibold uppercase tracking-wide text-violet-800 dark:text-violet-200">Staff: “I’m on this claim” (Telegram + workspace)</h2>
+    <p class="mt-2 leading-relaxed"><strong>In the ticket workspace</strong>, put <strong>👁</strong> or <strong>👀</strong> in a reply or internal note to ping the team on Telegram, add the acceptance note, move <strong>New → Open</strong> when needed, and assign yourself if the ticket has no assignee.</p>
+    <p class="mt-2 leading-relaxed"><strong>In Telegram</strong>, react with 👀 / 👁 on a claim alert, or reply with those emojis (or include the ticket id). The bot webhook must include <code class="rounded bg-white/80 px-1 dark:bg-zinc-900/80">message_reaction</code> in <code class="rounded bg-white/80 px-1 dark:bg-zinc-900/80">allowed_updates</code> — run <code class="rounded bg-white/80 px-1 dark:bg-zinc-900/80">python manage.py telegram_set_webhook</code> on the server after deploy.</p>
+    <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Telegram “on it” pings and the auto internal note are rate-limited to about once per 10 minutes per person per ticket; status and assignee still update every time.</p>
+  </div>
+
   {% if not telegram_bot_configured %}
   <div class="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-100">
     Telegram is not configured yet: set <code class="rounded bg-amber-100/80 px-1 dark:bg-amber-900/60">TELEGRAM_BOT_TOKEN</code> and <code class="rounded bg-amber-100/80 px-1 dark:bg-amber-900/60">TELEGRAM_BOT_USERNAME</code> (see <code class="rounded bg-amber-100/80 px-1 dark:bg-amber-900/60">docs/TELEGRAM.md</code>), redeploy, then register the webhook.

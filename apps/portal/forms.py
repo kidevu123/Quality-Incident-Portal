@@ -5,7 +5,18 @@ from django import forms
 from apps.claims.models import DefectType, ResolutionRequested, Severity
 from apps.crm.models import Batch, CustomerAccount, Manufacturer, Product
 
-_field = "mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+_field = (
+    "mt-1 w-full min-h-[44px] rounded-xl border border-zinc-200 bg-white px-3 py-2.5 "
+    "text-sm leading-relaxed text-zinc-900 shadow-sm placeholder:text-zinc-400 "
+    "focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/25 "
+    "dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+)
+_textarea_field = (
+    "mt-1 w-full min-h-[7.5rem] resize-y rounded-xl border border-zinc-200 bg-white px-3 py-3 "
+    "text-sm leading-relaxed text-zinc-900 shadow-sm placeholder:text-zinc-400 "
+    "focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/25 "
+    "dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+)
 
 
 class DataListTextInput(forms.TextInput):
@@ -98,7 +109,7 @@ class ClaimSubmissionForm(forms.Form):
             if isinstance(w, (forms.TextInput, forms.EmailInput, forms.NumberInput, forms.DateInput)):
                 w.attrs.setdefault("class", _field)
             elif isinstance(w, forms.Textarea):
-                w.attrs.setdefault("class", _field)
+                w.attrs.setdefault("class", _textarea_field)
             elif isinstance(w, forms.Select):
                 w.attrs.setdefault("class", _field)
 
