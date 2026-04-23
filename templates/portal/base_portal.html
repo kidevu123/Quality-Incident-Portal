@@ -1,30 +1,71 @@
 {% extends "base.html" %}
 {% block body %}
-<div class="flex min-h-0 flex-1 flex-col bg-gradient-to-b from-zinc-50 to-white dark:from-zinc-950 dark:to-zinc-900">
+<div class="flex min-h-0 min-w-0 flex-1 flex-col bg-gradient-to-b from-zinc-50 to-white dark:from-zinc-950 dark:to-zinc-900">
   <header class="shrink-0 border-b border-zinc-200/80 bg-white/80 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/80">
-    <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-y-3 px-4 py-4">
-      <div class="flex items-center gap-2">
+    <div class="mx-auto flex max-w-6xl items-center justify-between gap-3 px-3 py-3 sm:px-4 sm:py-4">
+      <div class="flex min-w-0 items-center gap-2">
         <div class="h-9 w-9 shrink-0 rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 shadow-soft"></div>
-        <div>
+        <div class="min-w-0">
           <div class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Nexus Resolve</div>
-          <div class="text-sm font-semibold">Distributor portal</div>
+          <div class="truncate text-sm font-semibold">Distributor portal</div>
         </div>
       </div>
+      <button
+        type="button"
+        class="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl border border-zinc-200 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800 lg:hidden"
+        id="portal-menu-toggle"
+        aria-expanded="false"
+        aria-controls="portal-nav-panel"
+        aria-label="Open menu"
+      >
+        <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
       {% with url_name=request.resolver_match.url_name|default:"" %}
-      <nav class="flex flex-wrap items-center justify-end gap-1 text-sm font-medium sm:gap-2">
-        <a href="{% url 'portal_home' %}" class="inline-flex items-center rounded-lg px-3 py-2 text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 {% if url_name == 'portal_home' %}bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100{% endif %}">Home</a>
-        <a href="{% url 'portal_claims' %}" class="inline-flex items-center rounded-lg px-3 py-2 text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 {% if url_name == 'portal_claims' %}bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100{% endif %}">Claims</a>
-        <a href="{% url 'portal_claim_submit' %}" class="inline-flex items-center rounded-lg px-3 py-2 text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 {% if url_name == 'portal_claim_submit' %}bg-violet-100 font-semibold text-violet-900 ring-1 ring-violet-300 dark:bg-violet-950/50 dark:text-violet-200 dark:ring-violet-700{% endif %}">New claim</a>
+      <nav class="hidden flex-wrap items-center justify-end gap-1 text-sm font-medium lg:flex sm:gap-2">
+        <a href="{% url 'portal_home' %}" class="inline-flex min-h-[44px] items-center rounded-lg px-3 py-2 text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 {% if url_name == 'portal_home' %}bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100{% endif %}">Home</a>
+        <a href="{% url 'portal_claims' %}" class="inline-flex min-h-[44px] items-center rounded-lg px-3 py-2 text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 {% if url_name == 'portal_claims' %}bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100{% endif %}">Claims</a>
+        <a href="{% url 'portal_claim_submit' %}" class="inline-flex min-h-[44px] items-center rounded-lg px-3 py-2 text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 {% if url_name == 'portal_claim_submit' %}bg-violet-100 font-semibold text-violet-900 ring-1 ring-violet-300 dark:bg-violet-950/50 dark:text-violet-200 dark:ring-violet-700{% endif %}">New claim</a>
         {% if request.user.role != 'distributor' %}
-        <a href="{% url 'account_telegram' %}" class="inline-flex items-center rounded-lg px-3 py-2 text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 {% if request.resolver_match and request.resolver_match.url_name == 'account_telegram' %}bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100{% endif %}">Telegram</a>
+        <a href="{% url 'account_telegram' %}" class="inline-flex min-h-[44px] items-center rounded-lg px-3 py-2 text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 {% if request.resolver_match and request.resolver_match.url_name == 'account_telegram' %}bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100{% endif %}">Telegram</a>
         {% endif %}
-        <a href="{% url 'logout' %}" class="inline-flex items-center rounded-lg px-3 py-2 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800">Sign out</a>
+        <a href="{% url 'logout' %}" class="inline-flex min-h-[44px] items-center rounded-lg px-3 py-2 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800">Sign out</a>
       </nav>
       {% endwith %}
     </div>
+    {% with url_name=request.resolver_match.url_name|default:"" %}
+    <div id="portal-nav-panel" class="hidden border-t border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 lg:hidden">
+      <nav class="mx-auto flex max-w-6xl flex-col px-3 py-2 sm:px-4">
+        <a href="{% url 'portal_home' %}" class="min-h-[48px] rounded-lg px-3 py-3 text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800 {% if url_name == 'portal_home' %}bg-zinc-100 font-medium dark:bg-zinc-800{% endif %}">Home</a>
+        <a href="{% url 'portal_claims' %}" class="min-h-[48px] rounded-lg px-3 py-3 text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800 {% if url_name == 'portal_claims' %}bg-zinc-100 font-medium dark:bg-zinc-800{% endif %}">Claims</a>
+        <a href="{% url 'portal_claim_submit' %}" class="min-h-[48px] rounded-lg px-3 py-3 text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800 {% if url_name == 'portal_claim_submit' %}bg-violet-100 font-semibold text-violet-900 dark:bg-violet-950/50 dark:text-violet-200{% endif %}">New claim</a>
+        {% if request.user.role != 'distributor' %}
+        <a href="{% url 'account_telegram' %}" class="min-h-[48px] rounded-lg px-3 py-3 text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800">Telegram</a>
+        {% endif %}
+        <a href="{% url 'logout' %}" class="min-h-[48px] rounded-lg px-3 py-3 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800">Sign out</a>
+      </nav>
+    </div>
+    {% endwith %}
   </header>
-  <main class="mx-auto w-full max-w-6xl flex-1 px-4 py-10">
+  <main class="mx-auto w-full max-w-6xl flex-1 px-3 py-6 sm:px-4 sm:py-10">
     {% block main %}{% endblock %}
   </main>
 </div>
+<script>
+(function () {
+  var btn = document.getElementById("portal-menu-toggle");
+  var panel = document.getElementById("portal-nav-panel");
+  if (!btn || !panel) return;
+  btn.addEventListener("click", function () {
+    panel.classList.toggle("hidden");
+    var isOpen = !panel.classList.contains("hidden");
+    btn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+  });
+  panel.querySelectorAll("a").forEach(function (a) {
+    a.addEventListener("click", function () {
+      panel.classList.add("hidden");
+      btn.setAttribute("aria-expanded", "false");
+    });
+  });
+})();
+</script>
 {% endblock %}

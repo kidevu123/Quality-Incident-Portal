@@ -1,38 +1,110 @@
 {% extends "base.html" %}
 {% block body %}
-<div class="flex min-h-full">
-  <aside class="hidden w-64 shrink-0 border-r border-zinc-200/80 bg-white/90 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/90 lg:block">
-    <div class="flex h-14 items-center gap-2 border-b border-zinc-100 px-5 dark:border-zinc-800">
-      <div class="h-8 w-8 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 shadow-soft"></div>
-      <div>
-        <div class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Nexus</div>
-        <div class="text-sm font-semibold">Resolve</div>
+<div
+  id="staff-nav-backdrop"
+  class="fixed inset-0 z-40 hidden bg-zinc-900/50 backdrop-blur-sm transition-opacity lg:hidden"
+  aria-hidden="true"
+></div>
+<div class="flex min-h-full min-w-0 flex-col bg-zinc-50 dark:bg-zinc-950 lg:flex-row">
+  <aside
+    id="staff-sidebar"
+    class="fixed inset-y-0 left-0 z-50 flex w-[min(18rem,calc(100vw-2.5rem))] max-w-full -translate-x-full flex-col border-r border-zinc-200/80 bg-white/95 shadow-xl backdrop-blur transition-transform duration-200 ease-out dark:border-zinc-800 dark:bg-zinc-900/95 lg:static lg:z-auto lg:w-64 lg:max-w-none lg:translate-x-0 lg:shrink-0 lg:shadow-none"
+    aria-label="Main navigation"
+  >
+    <div class="flex h-14 items-center justify-between gap-2 border-b border-zinc-100 px-4 dark:border-zinc-800 lg:px-5">
+      <div class="flex min-w-0 items-center gap-2">
+        <div class="h-8 w-8 shrink-0 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 shadow-soft"></div>
+        <div class="min-w-0">
+          <div class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Nexus</div>
+          <div class="truncate text-sm font-semibold">Resolve</div>
+        </div>
       </div>
+      <button
+        type="button"
+        class="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800 lg:hidden"
+        data-staff-nav-close
+        aria-label="Close menu"
+      >
+        <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
     </div>
-    <nav class="space-y-1 p-3 text-sm">
-      <a href="{% url 'support_inbox' %}" class="flex items-center gap-2 rounded-xl px-3 py-2 font-medium text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800">Inbox</a>
-      <a href="{% url 'executive_dashboard' %}" class="flex items-center gap-2 rounded-xl px-3 py-2 font-medium text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800">Dashboards</a>
-      <a href="{% url 'portal_home' %}" class="flex items-center gap-2 rounded-xl px-3 py-2 font-medium text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800">Portal</a>
-      <a href="{% url 'account_telegram' %}" class="flex items-center gap-2 rounded-xl px-3 py-2 font-medium text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800">Telegram alerts</a>
-      <a href="/admin/" class="flex items-center gap-2 rounded-xl px-3 py-2 font-medium text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800">Configuration</a>
+    <nav class="flex-1 space-y-1 overflow-y-auto p-3 text-sm">
+      <a href="{% url 'support_inbox' %}" class="flex min-h-[44px] items-center gap-2 rounded-xl px-3 py-2 font-medium text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800">Inbox</a>
+      <a href="{% url 'executive_dashboard' %}" class="flex min-h-[44px] items-center gap-2 rounded-xl px-3 py-2 font-medium text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800">Dashboards</a>
+      <a href="{% url 'portal_home' %}" class="flex min-h-[44px] items-center gap-2 rounded-xl px-3 py-2 font-medium text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800">Portal</a>
+      <a href="{% url 'account_telegram' %}" class="flex min-h-[44px] items-center gap-2 rounded-xl px-3 py-2 font-medium text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800">Telegram alerts</a>
+      <a href="/admin/" class="flex min-h-[44px] items-center gap-2 rounded-xl px-3 py-2 font-medium text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800">Configuration</a>
     </nav>
-    <div class="mt-auto border-t border-zinc-100 p-3 dark:border-zinc-800">
-      <button type="button" onclick="window.nexusToggleDark()" class="w-full rounded-xl border border-zinc-200 px-3 py-2 text-xs font-medium text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800">Toggle theme</button>
+    <div class="border-t border-zinc-100 p-3 dark:border-zinc-800">
+      <button type="button" onclick="window.nexusToggleDark()" class="min-h-[44px] w-full rounded-xl border border-zinc-200 px-3 py-2 text-xs font-medium text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800">Toggle theme</button>
       <div class="mt-2 truncate px-1 text-xs text-zinc-500">{{ request.user.username }}</div>
     </div>
   </aside>
   <div class="flex min-w-0 flex-1 flex-col">
-    <header class="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-zinc-200/80 bg-white/80 px-4 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/80">
-      <div class="flex items-center gap-3">
-        <span class="text-sm font-medium text-zinc-500">⌘K command palette</span>
+    <header class="sticky top-0 z-30 flex min-h-14 items-center justify-between gap-2 border-b border-zinc-200/80 bg-white/90 px-3 py-2 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/90 sm:px-4">
+      <div class="flex min-w-0 items-center gap-2">
+        <button
+          type="button"
+          class="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-xl border border-zinc-200 text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800 lg:hidden"
+          data-staff-nav-open
+          aria-expanded="false"
+          aria-controls="staff-sidebar"
+          aria-label="Open menu"
+        >
+          <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <span class="hidden text-sm font-medium text-zinc-500 md:inline">⌘K command palette</span>
+        <span class="truncate text-sm font-semibold text-zinc-800 dark:text-zinc-100 md:hidden">Nexus Resolve</span>
       </div>
-      <div class="flex items-center gap-2">
-        <a href="{% url 'logout' %}" class="rounded-xl px-3 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800">Sign out</a>
+      <div class="flex shrink-0 items-center gap-1">
+        <a href="{% url 'logout' %}" class="inline-flex min-h-[44px] items-center rounded-xl px-3 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800">Sign out</a>
       </div>
     </header>
-    <main class="flex-1 p-4 lg:p-8">
+    <main class="flex-1 p-3 sm:p-4 lg:p-8">
       {% block main %}{% endblock %}
     </main>
   </div>
 </div>
+<script>
+(function () {
+  var side = document.getElementById("staff-sidebar");
+  var back = document.getElementById("staff-nav-backdrop");
+  if (!side || !back) return;
+  var openers = document.querySelectorAll("[data-staff-nav-open]");
+  var closers = document.querySelectorAll("[data-staff-nav-close]");
+  function setOpen(open) {
+    if (open) {
+      side.classList.remove("-translate-x-full");
+      back.classList.remove("hidden");
+      document.body.classList.add("overflow-hidden");
+    } else {
+      side.classList.add("-translate-x-full");
+      back.classList.add("hidden");
+      document.body.classList.remove("overflow-hidden");
+    }
+    openers.forEach(function (b) {
+      b.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+  }
+  function openNav() {
+    setOpen(true);
+  }
+  function closeNav() {
+    setOpen(false);
+  }
+  openers.forEach(function (b) {
+    b.addEventListener("click", openNav);
+  });
+  closers.forEach(function (b) {
+    b.addEventListener("click", closeNav);
+  });
+  back.addEventListener("click", closeNav);
+  window.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") closeNav();
+  });
+  window.addEventListener("resize", function () {
+    if (window.matchMedia("(min-width: 1024px)").matches) closeNav();
+  });
+})();
+</script>
 {% endblock %}

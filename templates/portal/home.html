@@ -2,11 +2,11 @@
 {% block main %}
 <div class="grid gap-6 lg:grid-cols-3">
   <div class="lg:col-span-2 space-y-3">
-    <h1 class="text-3xl font-semibold tracking-tight">Welcome back</h1>
+    <h1 class="text-2xl font-semibold tracking-tight sm:text-3xl">Welcome back</h1>
     <p class="text-zinc-600 dark:text-zinc-300">Submit wholesale claims, track reimbursements, and collaborate with your support team in one premium workspace.</p>
-    <div class="flex flex-wrap gap-3">
-      <a href="{% url 'portal_claim_submit' %}" class="rounded-2xl bg-violet-600 px-5 py-3 text-sm font-semibold text-white shadow-soft hover:bg-violet-500">Submit a claim</a>
-      <a href="{% url 'portal_claims' %}" class="rounded-2xl border border-zinc-200 px-5 py-3 text-sm font-semibold dark:border-zinc-700">View history</a>
+    <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+      <a href="{% url 'portal_claim_submit' %}" class="inline-flex min-h-[48px] items-center justify-center rounded-2xl bg-violet-600 px-5 py-3 text-center text-sm font-semibold text-white shadow-soft hover:bg-violet-500">Submit a claim</a>
+      <a href="{% url 'portal_claims' %}" class="inline-flex min-h-[48px] items-center justify-center rounded-2xl border border-zinc-200 px-5 py-3 text-center text-sm font-semibold dark:border-zinc-700">View history</a>
     </div>
   </div>
   <div class="rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-soft dark:border-zinc-800 dark:bg-zinc-900">

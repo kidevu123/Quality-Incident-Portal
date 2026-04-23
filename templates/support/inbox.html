@@ -12,8 +12,9 @@
       <span class="rounded-full bg-violet-50 px-3 py-1 text-xs font-medium text-violet-700 dark:bg-violet-950 dark:text-violet-200">Live</span>
     </div>
   </div>
-  <div class="overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-soft dark:border-zinc-800 dark:bg-zinc-900">
-    <table class="min-w-full divide-y divide-zinc-100 text-sm dark:divide-zinc-800">
+  <div class="-mx-1 overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-soft sm:mx-0 dark:border-zinc-800 dark:bg-zinc-900">
+    <div class="overflow-x-auto overscroll-x-contain">
+    <table class="min-w-[640px] w-full divide-y divide-zinc-100 text-sm dark:divide-zinc-800">
       <thead class="bg-zinc-50/80 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:bg-zinc-900/50">
         <tr>
           <th class="px-4 py-3">Ticket</th>
@@ -44,6 +45,7 @@
         {% endfor %}
       </tbody>
     </table>
+    </div>
   </div>
   {% if is_paginated %}
   <div class="mt-4 flex justify-center gap-2 text-sm">

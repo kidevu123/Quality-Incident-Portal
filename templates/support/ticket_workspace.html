@@ -2,19 +2,19 @@
 {% load tz %}
 {% block title %}{{ ticket.public_id }} — Nexus{% endblock %}
 {% block main %}
-<div class="mx-auto max-w-[1600px]">
-  <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+<div class="mx-auto max-w-[1600px] min-w-0">
+  <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
     <div>
       <div class="text-xs font-medium uppercase tracking-wide text-zinc-500">Ticket workspace</div>
       <h1 class="text-xl font-semibold tracking-tight">{{ ticket.public_id }}</h1>
       <p class="text-sm text-zinc-500">{{ ticket.subject }}</p>
     </div>
     <div class="flex flex-wrap gap-2">
-      <a href="{% url 'customer_360' ticket.customer_account_id %}" class="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-medium shadow-sm hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800">Account 360</a>
+      <a href="{% url 'customer_360' ticket.customer_account_id %}" class="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-medium shadow-sm hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800">Account 360</a>
     </div>
   </div>
   <div class="grid gap-4 lg:grid-cols-12">
-    <section class="lg:col-span-3 space-y-3">
+    <section class="order-2 space-y-3 lg:order-none lg:col-span-3">
       <div class="rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-soft dark:border-zinc-800 dark:bg-zinc-900">
         <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Queues & routing</h2>
         <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-300">Macros, escalations, and filters plug in here via admin configuration.</p>
@@ -32,10 +32,10 @@
         </form>
       </div>
     </section>
-    <section class="lg:col-span-6 space-y-4">
+    <section class="order-1 space-y-4 lg:order-none lg:col-span-6">
       {% with c=ticket.claim %}
       {% if c %}
-      <div class="rounded-2xl border border-violet-200/80 bg-violet-50/40 p-4 shadow-soft dark:border-violet-900/40 dark:bg-violet-950/20">
+      <div class="rounded-2xl border border-violet-200/80 bg-violet-50/40 p-3 shadow-soft sm:p-4 dark:border-violet-900/40 dark:bg-violet-950/20">
         <h2 class="text-sm font-semibold text-violet-900 dark:text-violet-100">Distributor submission</h2>
         <p class="mt-1 text-xs text-violet-800/80 dark:text-violet-300/90">Everything the customer entered on the portal — use this to investigate and resolve.</p>
         <dl class="mt-4 grid gap-3 text-sm sm:grid-cols-2">
@@ -73,8 +73,8 @@
           <div class="mt-2 flex flex-wrap gap-3">
             {% for a in c.attachments.all %}
             {% if a.kind == 'image' %}
-            <a href="{{ a.file.url }}" target="_blank" rel="noopener noreferrer" class="group block shrink-0">
-              <img src="{{ a.file.url }}" alt="Claim attachment {{ forloop.counter }}" class="h-36 w-auto max-w-[220px] rounded-xl object-cover shadow-sm ring-1 ring-zinc-200 transition group-hover:ring-violet-400 dark:ring-zinc-700" loading="lazy" decoding="async">
+            <a href="{{ a.file.url }}" target="_blank" rel="noopener noreferrer" class="group block w-full max-w-full shrink-0 sm:w-auto">
+              <img src="{{ a.file.url }}" alt="Claim attachment {{ forloop.counter }}" class="mx-auto max-h-64 w-full max-w-full rounded-xl object-contain shadow-sm ring-1 ring-zinc-200 transition group-hover:ring-violet-400 sm:max-h-48 sm:w-auto sm:max-w-[240px] dark:ring-zinc-700" loading="lazy" decoding="async">
               <span class="mt-1 block text-center text-[10px] text-zinc-500">Open full size</span>
             </a>
             {% elif a.kind == 'video' %}
@@ -103,9 +103,9 @@
         <div class="mt-4 max-h-[480px] space-y-3 overflow-y-auto pr-1">
           {% for m in ticket.messages.all %}
           <div class="rounded-2xl border px-3 py-2 text-sm {% if m.is_internal %}border-amber-200 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-950/30{% else %}border-zinc-100 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950/40{% endif %}">
-            <div class="flex justify-between text-xs text-zinc-500">
-              <span>{% if m.author %}{{ m.author.username }}{% else %}System{% endif %}</span>
-              <span>{{ m.created_at|localtime|date:"M j, Y g:i A T" }}</span>
+            <div class="flex flex-col gap-1 text-xs text-zinc-500 sm:flex-row sm:items-start sm:justify-between">
+              <span class="break-all">{% if m.author %}{{ m.author.username }}{% else %}System{% endif %}</span>
+              <span class="shrink-0 whitespace-nowrap">{{ m.created_at|localtime|date:"M j, Y g:i A T" }}</span>
             </div>
             <div class="mt-1 whitespace-pre-wrap">{{ m.body }}</div>
           </div>
@@ -117,11 +117,11 @@
           {% csrf_token %}
           <textarea name="body" rows="3" class="w-full rounded-2xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950" placeholder="Reply to customer…"></textarea>
           <label class="flex items-center gap-2 text-xs text-zinc-500"><input type="checkbox" name="internal" value="1"> Internal note</label>
-          <button class="rounded-xl bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500">Send</button>
+          <button class="min-h-[44px] rounded-xl bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500">Send</button>
         </form>
       </div>
     </section>
-    <section class="lg:col-span-3 space-y-3">
+    <section class="order-3 space-y-3 lg:order-none lg:col-span-3">
       {% with c=ticket.claim %}
       {% if c %}
       <div class="rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-soft dark:border-zinc-800 dark:bg-zinc-900">
