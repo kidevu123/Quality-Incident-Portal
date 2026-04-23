@@ -11,7 +11,7 @@ New distributor claims (`/portal/claims/new/`) can trigger Telegram messages.
 
 ### “Someone is on it” (eye emoji)
 
-On the **staff ticket workspace**, if a teammate sends a reply or internal note that contains **👁** or **👀**, Nexus sends a Telegram HTML alert to **`TELEGRAM_CHAT_IDS`** plus every linked **Support Agent**, **Quality Manager**, **Administrator**, **Finance**, and **superuser** — except the sender’s own linked chat (so you don’t ping yourself). The same person/ticket can only trigger this about once every **10 minutes** (spam guard).
+On the **staff ticket workspace**, if a teammate sends a reply or internal note that contains **👁** or **👀**, Nexus also: adds an **internal note** (“X has accepted this claim/ticket…”), moves **New → Open** (if applicable), sets **assignee** when empty, and sends a Telegram HTML alert to **`TELEGRAM_CHAT_IDS`** plus every linked **Support Agent**, **Quality Manager**, **Administrator**, **Finance**, and **superuser** — except the sender’s own linked chat. The **Telegram message** and **auto internal note** are limited to about once per **10 minutes** per person per ticket (spam guard); **status/assignee** updates still apply when you post with the emoji.
 
 ## 1. Create the bot
 
