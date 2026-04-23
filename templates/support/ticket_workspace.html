@@ -104,8 +104,18 @@
         <div class="mt-4 max-h-[480px] space-y-3 overflow-y-auto pr-1">
           {% for m in ticket.messages.all %}
           <div class="rounded-2xl border px-3 py-3 text-sm leading-relaxed {% if m.is_internal %}border-amber-200 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-950/30{% else %}border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950/50{% endif %}">
-            <div class="flex flex-col gap-1 text-xs text-zinc-500 sm:flex-row sm:items-start sm:justify-between">
-              <span class="break-all">{% if m.author %}{{ m.author.username }}{% else %}System{% endif %}</span>
+            <div class="flex flex-col gap-2 text-xs text-zinc-500 sm:flex-row sm:items-start sm:justify-between">
+              <div class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                <span class="break-all font-medium text-zinc-600 dark:text-zinc-400">{% if m.author %}{{ m.author.username }}{% else %}System{% endif %}</span>
+                {% if m.is_internal %}
+                <form method="post" class="inline" onsubmit="return confirm('Delete this internal note? For a mistaken simulated Zoho replacement (SIM-SO-…), the SO field and block on re-click are cleared and the ticket reopens if it was resolved via replacement.');">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="delete_message">
+                  <input type="hidden" name="message_id" value="{{ m.id }}">
+                  <button type="submit" class="rounded-lg px-2 py-0.5 text-[11px] font-medium text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40">Delete</button>
+                </form>
+                {% endif %}
+              </div>
               <span class="shrink-0 whitespace-nowrap">{{ m.created_at|localtime|date:"M j, Y g:i A T" }}</span>
             </div>
             <div class="mt-2 whitespace-pre-wrap text-zinc-900 dark:text-zinc-100">{{ m.body }}</div>

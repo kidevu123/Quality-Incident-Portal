@@ -2,7 +2,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.views import redirect_to_login
 from django.db.models import Count, Prefetch, Sum
-from django.shortcuts import redirect
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.views import View
 from django.views.generic import DetailView, ListView, TemplateView
@@ -100,6 +100,41 @@ class TicketWorkspaceView(LoginRequiredMixin, StaffUserMixin, DetailView):
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
+        if request.POST.get("action") == "delete_message":
+            raw_id = request.POST.get("message_id") or ""
+            if not str(raw_id).isdigit():
+                messages.error(request, "Invalid message.")
+                return redirect(reverse("ticket_workspace", kwargs={"public_id": self.object.public_id}))
+            msg = get_object_or_404(TicketMessage, pk=int(raw_id), ticket_id=self.object.id)
+            if not msg.is_internal:
+                messages.error(request, "Only internal notes can be deleted here.")
+                return redirect(reverse("ticket_workspace", kwargs={"public_id": self.object.public_id}))
+            claim = getattr(self.object, "claim", None)
+            zoho_note = msg.body.startswith("Replacement sales order created in Zoho:")
+            matched_zoho = bool(
+                claim
+                and zoho_note
+                and (claim.zoho_replacement_so_number or "") in msg.body
+            )
+            sim_cleared = False
+            if matched_zoho:
+                from apps.zoho_integration.services import clear_simulated_replacement_so
+
+                sim_cleared = clear_simulated_replacement_so(claim=claim, ticket=self.object)
+            msg.delete()
+            if matched_zoho and sim_cleared:
+                messages.success(
+                    request,
+                    "Removed the Zoho note and cleared the simulated replacement (ticket set back to Open when it was resolved via replacement).",
+                )
+            elif matched_zoho and not sim_cleared:
+                messages.warning(
+                    request,
+                    "Note removed. This claim still has a non-simulated Zoho SO on file; clear it in admin if needed.",
+                )
+            else:
+                messages.success(request, "Internal note removed.")
+            return redirect(reverse("ticket_workspace", kwargs={"public_id": self.object.public_id}))
         if request.POST.get("action") == "zoho_replacement":
             from apps.zoho_integration.services import create_replacement_sales_order
 
