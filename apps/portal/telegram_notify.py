@@ -40,11 +40,13 @@ def _tg_h(s: str) -> str:
     return html.escape(s or "", quote=False)
 
 
-def send_telegram_plain_text(chat_id: str, text: str, *, parse_mode: str | None = None) -> None:
-    """Single sendMessage; failures logged only."""
+def send_telegram_plain_text(
+    chat_id: str, text: str, *, parse_mode: str | None = None
+) -> int | None:
+    """Single sendMessage; failures logged only. Returns Telegram ``message_id`` when successful."""
     token = (getattr(settings, "TELEGRAM_BOT_TOKEN", None) or "").strip()
     if not token or not chat_id:
-        return
+        return None
     url = f"https://api.telegram.org/bot{token}/sendMessage"
     body: dict = {"chat_id": chat_id, "text": text}
     if parse_mode:
@@ -55,8 +57,35 @@ def send_telegram_plain_text(chat_id: str, text: str, *, parse_mode: str | None 
         payload = resp.json()
         if not payload.get("ok"):
             logger.warning("Telegram sendMessage not ok: %s", payload)
+            return None
+        result = payload.get("result") or {}
+        mid = result.get("message_id")
+        return int(mid) if mid is not None else None
     except Exception:  # noqa: BLE001
         logger.exception("Telegram send failed (chat_id=%s)", chat_id)
+        return None
+
+
+TG_REPLY_BIND_CACHE_PREFIX = "tg:reply_bind:v1"
+TG_REPLY_BIND_TTL = 60 * 86400  # 60 days — staff can reply to older alerts
+
+
+def register_telegram_message_for_ticket_reply(chat_id: str, message_id: int, ticket_public_id: str) -> None:
+    """So webhook can map \"reply to this bot message\" → ticket ``public_id``."""
+    from django.core.cache import cache
+
+    key = f"{TG_REPLY_BIND_CACHE_PREFIX}:{chat_id}:{message_id}"
+    cache.set(key, ticket_public_id, timeout=TG_REPLY_BIND_TTL)
+
+
+def resolve_ticket_public_id_from_telegram_reply(chat_id: str, reply_to_message_id: int | None) -> str | None:
+    from django.core.cache import cache
+
+    if reply_to_message_id is None:
+        return None
+    key = f"{TG_REPLY_BIND_CACHE_PREFIX}:{chat_id}:{reply_to_message_id}"
+    val = cache.get(key)
+    return str(val).strip() if val else None
 
 
 def collect_portal_claim_notification_chat_ids() -> list[str]:
@@ -127,6 +156,26 @@ def message_body_signals_working_on_claim(body: str) -> bool:
     return "\U0001f440" in body or "\U0001f441" in body
 
 
+def _reaction_list_has_working_on_eyes(reactions: list | None) -> bool:
+    """True if Bot API ``ReactionType`` list includes 👀 / 👁 (``type`` == ``emoji``)."""
+    for r in reactions or []:
+        if not isinstance(r, dict):
+            continue
+        if r.get("type") != "emoji":
+            continue
+        em = r.get("emoji") or ""
+        if "\U0001f440" in em or "\U0001f441" in em:
+            return True
+    return False
+
+
+def telegram_reaction_newly_signals_working_on_claim(old_reaction: list | None, new_reaction: list | None) -> bool:
+    """True when the user *added* 👀/👁 (present in ``new_reaction`` but not ``old_reaction``)."""
+    return _reaction_list_has_working_on_eyes(new_reaction) and not _reaction_list_has_working_on_eyes(
+        old_reaction
+    )
+
+
 def notify_telegram_staff_working_on_ticket(ticket: "Ticket", actor) -> None:
     """Tell the team (Telegram) that ``actor`` is working this ticket; skip duplicate within 10 min."""
     token = (getattr(settings, "TELEGRAM_BOT_TOKEN", None) or "").strip()
@@ -167,7 +216,9 @@ def notify_telegram_staff_working_on_ticket(ticket: "Ticket", actor) -> None:
     for cid in chat_ids:
         if actor_cid and cid == actor_cid:
             continue
-        send_telegram_plain_text(cid, text, parse_mode="HTML")
+        mid = send_telegram_plain_text(cid, text, parse_mode="HTML")
+        if mid is not None:
+            register_telegram_message_for_ticket_reply(str(cid), mid, ticket.public_id)
 
 
 def notify_telegram_portal_claim(claim: "Claim", ticket: "Ticket", submitted_by) -> None:
@@ -201,4 +252,6 @@ def notify_telegram_portal_claim(claim: "Claim", ticket: "Ticket", submitted_by)
     )
 
     for chat_id in chat_ids:
-        send_telegram_plain_text(chat_id, text, parse_mode="HTML")
+        mid = send_telegram_plain_text(chat_id, text, parse_mode="HTML")
+        if mid is not None:
+            register_telegram_message_for_ticket_reply(str(chat_id), mid, ticket.public_id)

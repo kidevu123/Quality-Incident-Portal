@@ -11,7 +11,11 @@ New distributor claims (`/portal/claims/new/`) can trigger Telegram messages.
 
 ### “Someone is on it” (eye emoji)
 
-On the **staff ticket workspace**, if a teammate sends a reply or internal note that contains **👁** or **👀**, Nexus also: adds an **internal note** (“X has accepted this claim/ticket…”), moves **New → Open** (if applicable), sets **assignee** when empty, and sends a Telegram HTML alert to **`TELEGRAM_CHAT_IDS`** plus every linked **Support Agent**, **Quality Manager**, **Administrator**, **Finance**, and **superuser** — except the sender’s own linked chat. The **Telegram message** and **auto internal note** are limited to about once per **10 minutes** per person per ticket (spam guard); **status/assignee** updates still apply when you post with the emoji.
+In the **staff ticket workspace**, if a teammate sends a reply or internal note that contains **👁** or **👀**, Nexus also: adds an **internal note** (“X has accepted this claim/ticket…”), moves **New → Open** (if applicable), sets **assignee** when empty, and sends a Telegram HTML alert to **`TELEGRAM_CHAT_IDS`** plus every linked **Support Agent**, **Quality Manager**, **Administrator**, **Finance**, and **superuser** — except the sender’s own linked chat. The **Telegram message** and **auto internal note** are limited to about once per **10 minutes** per person per ticket (spam guard); **status/assignee** updates still apply when you post with the emoji.
+
+**In Telegram:** the same workflow runs when a **linked** staff user (same roles as above; not distributors) either **reacts with 👁 or 👀** on the bot’s claim/ticket alert message, **replies** with those emojis to that alert, or sends a message that includes **TKT-…** or **CLM-…** (e.g. `👀 TKT-abc-123`). Reactions on a message that is not a mapped Nexus alert are ignored (no spam). The webhook must include **`message_reaction`** in `allowed_updates`, and you must **call `setWebhook` again** after changing it (see below). Telegram only delivers reaction updates if the bot can see reactions in that chat (in **groups**, the bot usually needs to be an **administrator**; **private** bot chats are fine).
+
+Outbound claim/working-on messages register their `message_id` in cache so **replies and reactions** on that message resolve the ticket. Alerts sent **before** that code was deployed cannot be bound until a new alert is sent for that ticket.
 
 ## 1. Create the bot
 
@@ -42,7 +46,7 @@ curl -sS -X POST "https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/setWebhook" \
   -d '{
     "url": "https://<your-domain>/portal/telegram/webhook/",
     "secret_token": "<TELEGRAM_WEBHOOK_SECRET>",
-    "allowed_updates": ["message", "edited_message"]
+    "allowed_updates": ["message", "edited_message", "message_reaction"]
   }'
 ```
 

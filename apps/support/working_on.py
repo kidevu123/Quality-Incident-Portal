@@ -20,7 +20,7 @@ def _acceptance_note_body(ticket: Ticket, username: str) -> str:
     return f"{username} has accepted this claim and is working on it."
 
 
-def apply_staff_working_on_signals(ticket: Ticket, user, body: str) -> None:
+def apply_staff_working_on_signals(ticket: Ticket, user, body: str, *, via_telegram: bool = False) -> None:
     """
     If ``body`` contains the working-on emojis:
     - Add an internal note (at most once per user per ticket per ~10 minutes).
@@ -42,6 +42,15 @@ def apply_staff_working_on_signals(ticket: Ticket, user, body: str) -> None:
             body=_acceptance_note_body(ticket, user.get_username()),
             is_internal=True,
         )
+        if via_telegram:
+            raw = body.strip()[:800]
+            if raw:
+                TicketMessage.objects.create(
+                    ticket=ticket,
+                    author=user,
+                    body=f"[Via Telegram] {user.get_username()}: {raw}",
+                    is_internal=True,
+                )
 
     update_fields: list[str] = []
     if ticket.status == TicketStatus.NEW:
