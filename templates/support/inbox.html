@@ -1,4 +1,5 @@
 {% extends "support/app_shell.html" %}
+{% load tz %}
 {% block title %}Inbox — Nexus Resolve{% endblock %}
 {% block main %}
 <div class="mx-auto max-w-7xl">
@@ -35,8 +36,8 @@
             <span class="inline-flex rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">{{ t.get_status_display }}</span>
           </td>
           <td class="px-4 py-3 capitalize">{{ t.priority }}</td>
-          <td class="px-4 py-3 text-xs text-zinc-500">{% if t.sla_resolution_at %}{{ t.sla_resolution_at }}{% else %}—{% endif %}</td>
-          <td class="px-4 py-3 text-xs text-zinc-500">{{ t.updated_at }}</td>
+          <td class="px-4 py-3 text-xs text-zinc-500">{% if t.sla_resolution_at %}{{ t.sla_resolution_at|localtime|date:"M j, Y g:i A T" }}{% else %}—{% endif %}</td>
+          <td class="px-4 py-3 text-xs text-zinc-500">{{ t.updated_at|localtime|date:"M j, Y g:i A T" }}</td>
         </tr>
         {% empty %}
         <tr><td colspan="6" class="px-4 py-12 text-center text-sm text-zinc-500">No tickets yet — run seed data.</td></tr>

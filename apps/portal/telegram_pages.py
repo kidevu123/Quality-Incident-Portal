@@ -8,12 +8,26 @@ from django.urls import reverse
 from django.views import View
 from django.views.generic import TemplateView
 
-from apps.accounts.models import User
+from apps.accounts.models import Role, User
 
 from .telegram_link import mint_telegram_link_token
 
 
-class TelegramSettingsView(LoginRequiredMixin, TemplateView):
+class InternalTeamTelegramMixin:
+    """Telegram alerts are for Nexus staff only — not distributor portal users."""
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated and request.user.role == Role.DISTRIBUTOR:
+            messages.info(
+                request,
+                "Telegram notifications are set up by your Nexus support team. "
+                "You will receive updates on your claims in this portal.",
+            )
+            return redirect("portal_home")
+        return super().dispatch(request, *args, **kwargs)
+
+
+class TelegramSettingsView(InternalTeamTelegramMixin, LoginRequiredMixin, TemplateView):
     template_name = "portal/telegram_settings.html"
 
     def get_context_data(self, **kwargs):
@@ -33,7 +47,7 @@ class TelegramSettingsView(LoginRequiredMixin, TemplateView):
         return ctx
 
 
-class TelegramUnlinkView(LoginRequiredMixin, View):
+class TelegramUnlinkView(InternalTeamTelegramMixin, LoginRequiredMixin, View):
     http_method_names = ["post"]
 
     def post(self, request, *args, **kwargs):

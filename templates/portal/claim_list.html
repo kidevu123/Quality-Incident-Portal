@@ -1,19 +1,22 @@
 {% extends "portal/base_portal.html" %}
+{% load tz %}
 {% block main %}
 <h1 class="text-2xl font-semibold">Your claims</h1>
 <div class="mt-6 overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-soft dark:border-zinc-800 dark:bg-zinc-900">
   <table class="min-w-full divide-y divide-zinc-100 text-sm dark:divide-zinc-800">
-    <thead class="bg-zinc-50 text-left text-xs font-semibold uppercase text-zinc-500 dark:bg-zinc-900/50"><tr><th class="px-4 py-3">Claim</th><th class="px-4 py-3">Ticket</th><th class="px-4 py-3">SKU</th><th class="px-4 py-3">Resolution</th></tr></thead>
+    <thead class="bg-zinc-50 text-left text-xs font-semibold uppercase text-zinc-500 dark:bg-zinc-900/50"><tr><th class="px-4 py-3">Claim</th><th class="px-4 py-3">Ticket</th><th class="px-4 py-3">Status</th><th class="px-4 py-3">SKU</th><th class="px-4 py-3">Resolution</th><th class="px-4 py-3">Submitted</th></tr></thead>
     <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
       {% for c in claims %}
       <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
         <td class="px-4 py-3 font-medium">{{ c.public_id }}</td>
         <td class="px-4 py-3"><a class="text-violet-600 hover:underline" href="{% url 'portal_ticket' c.ticket.public_id %}">{{ c.ticket.public_id }}</a></td>
+        <td class="px-4 py-3"><span class="inline-flex rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200">{{ c.ticket.get_status_display }}</span></td>
         <td class="px-4 py-3">{{ c.product.sku }}</td>
         <td class="px-4 py-3">{{ c.get_resolution_requested_display }}</td>
+        <td class="px-4 py-3 whitespace-nowrap text-xs text-zinc-500">{{ c.created_at|localtime|date:"M j, Y g:i A T" }}</td>
       </tr>
       {% empty %}
-      <tr><td colspan="4" class="px-4 py-10 text-center text-zinc-500">No claims yet.</td></tr>
+      <tr><td colspan="6" class="px-4 py-10 text-center text-zinc-500">No claims yet.</td></tr>
       {% endfor %}
     </tbody>
   </table>

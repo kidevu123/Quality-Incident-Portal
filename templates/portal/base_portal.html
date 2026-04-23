@@ -15,7 +15,9 @@
         <a href="{% url 'portal_home' %}" class="inline-flex items-center rounded-lg px-3 py-2 text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 {% if url_name == 'portal_home' %}bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100{% endif %}">Home</a>
         <a href="{% url 'portal_claims' %}" class="inline-flex items-center rounded-lg px-3 py-2 text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 {% if url_name == 'portal_claims' %}bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100{% endif %}">Claims</a>
         <a href="{% url 'portal_claim_submit' %}" class="inline-flex items-center rounded-lg px-3 py-2 text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 {% if url_name == 'portal_claim_submit' %}bg-violet-100 font-semibold text-violet-900 ring-1 ring-violet-300 dark:bg-violet-950/50 dark:text-violet-200 dark:ring-violet-700{% endif %}">New claim</a>
+        {% if request.user.role != 'distributor' %}
         <a href="{% url 'account_telegram' %}" class="inline-flex items-center rounded-lg px-3 py-2 text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 {% if request.resolver_match and request.resolver_match.url_name == 'account_telegram' %}bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100{% endif %}">Telegram</a>
+        {% endif %}
         <a href="{% url 'logout' %}" class="inline-flex items-center rounded-lg px-3 py-2 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800">Sign out</a>
       </nav>
       {% endwith %}

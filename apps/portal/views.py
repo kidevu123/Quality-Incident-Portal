@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.views import View
@@ -135,7 +136,12 @@ class PortalTicketThreadView(LoginRequiredMixin, DistributorRequiredMixin, View)
         return render(
             request,
             "portal/ticket_thread.html",
-            {"ticket": ticket, "claim": claim, "messages": ticket.messages.all()},
+            {
+                "ticket": ticket,
+                "claim": claim,
+                "messages": ticket.messages.all(),
+                "ticket_status_poll_url": reverse("portal_ticket_status", kwargs={"public_id": public_id}),
+            },
         )
 
     def post(self, request, public_id):
@@ -149,3 +155,19 @@ class PortalTicketThreadView(LoginRequiredMixin, DistributorRequiredMixin, View)
                 is_internal=False,
             )
         return redirect("portal_ticket", public_id=public_id)
+
+
+class PortalTicketStatusView(LoginRequiredMixin, DistributorRequiredMixin, View):
+    """JSON for distributor thread page — status refreshes when staff updates the ticket."""
+
+    def get(self, request, public_id):
+        ticket = get_object_or_404(
+            Ticket.objects.only("public_id", "status", "updated_at"),
+            public_id=public_id,
+        )
+        return JsonResponse(
+            {
+                "status": ticket.status,
+                "label": str(ticket.get_status_display()),
+            }
+        )

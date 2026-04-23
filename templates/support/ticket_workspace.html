@@ -1,4 +1,5 @@
 {% extends "support/app_shell.html" %}
+{% load tz %}
 {% block title %}{{ ticket.public_id }} — Nexus{% endblock %}
 {% block main %}
 <div class="mx-auto max-w-[1600px]">
@@ -39,7 +40,7 @@
           <div class="rounded-2xl border px-3 py-2 text-sm {% if m.is_internal %}border-amber-200 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-950/30{% else %}border-zinc-100 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950/40{% endif %}">
             <div class="flex justify-between text-xs text-zinc-500">
               <span>{% if m.author %}{{ m.author.username }}{% else %}System{% endif %}</span>
-              <span>{{ m.created_at }}</span>
+              <span>{{ m.created_at|localtime|date:"M j, Y g:i A T" }}</span>
             </div>
             <div class="mt-1 whitespace-pre-wrap">{{ m.body }}</div>
           </div>
@@ -81,7 +82,7 @@
         <ul class="mt-2 max-h-40 space-y-2 overflow-y-auto text-xs text-zinc-600 dark:text-zinc-300">
           {% if ticket.claim %}
           {% for z in ticket.claim.zoho_logs.all|slice:":8" %}
-          <li class="rounded-lg bg-zinc-50 px-2 py-1 dark:bg-zinc-950/50">{{ z.action }} — {{ z.status }} — {{ z.created_at }}</li>
+          <li class="rounded-lg bg-zinc-50 px-2 py-1 dark:bg-zinc-950/50">{{ z.action }} — {{ z.status }} — {{ z.created_at|localtime|date:"M j, Y g:i A T" }}</li>
           {% empty %}
           <li>No sync events.</li>
           {% endfor %}
