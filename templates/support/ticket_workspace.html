@@ -43,6 +43,7 @@
           <div><dt class="text-xs font-medium uppercase text-zinc-500">Severity</dt><dd class="mt-0.5 font-medium text-zinc-900 dark:text-zinc-100">{{ c.get_severity_display }}</dd></div>
           <div><dt class="text-xs font-medium uppercase text-zinc-500">Resolution requested</dt><dd class="mt-0.5 font-medium text-zinc-900 dark:text-zinc-100">{{ c.get_resolution_requested_display }}</dd></div>
           <div><dt class="text-xs font-medium uppercase text-zinc-500">Qty sold / affected</dt><dd class="mt-0.5 font-medium text-zinc-900 dark:text-zinc-100">{{ c.quantity_sold }} / {{ c.quantity_affected }}</dd></div>
+          <div><dt class="text-xs font-medium uppercase text-zinc-500">Est. financial impact</dt><dd class="mt-0.5 font-medium text-zinc-900 dark:text-zinc-100">${{ c.estimated_exposure }} <span class="text-xs font-normal text-zinc-500">(from distributor or catalog × qty)</span></dd></div>
           <div><dt class="text-xs font-medium uppercase text-zinc-500">Date sold</dt><dd class="mt-0.5 text-zinc-900 dark:text-zinc-100">{% if c.date_sold %}{{ c.date_sold|date:"M j, Y" }}{% else %}—{% endif %}</dd></div>
           <div><dt class="text-xs font-medium uppercase text-zinc-500">PO / Invoice</dt><dd class="mt-0.5 break-all text-zinc-900 dark:text-zinc-100">{% if c.po_number %}{{ c.po_number }}{% else %}—{% endif %} / {% if c.invoice_number %}{{ c.invoice_number }}{% else %}—{% endif %}</dd></div>
         </dl>

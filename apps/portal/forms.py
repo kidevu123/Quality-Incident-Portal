@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django import forms
 
 from apps.claims.models import DefectType, ResolutionRequested, Severity
@@ -62,6 +64,17 @@ class ClaimSubmissionForm(forms.Form):
     defect_type = forms.ChoiceField(choices=DefectType.choices)
     quantity_sold = forms.IntegerField(min_value=0, required=False)
     quantity_affected = forms.IntegerField(min_value=0, required=False)
+    estimated_financial_impact = forms.DecimalField(
+        label="Estimated financial impact (USD, optional)",
+        max_digits=14,
+        decimal_places=2,
+        required=False,
+        min_value=Decimal("0"),
+        help_text=(
+            "Approximate credit, refund, or replacement value you expect. "
+            "If you leave this blank, we estimate from catalog unit price × affected quantity when available."
+        ),
+    )
     severity = forms.ChoiceField(choices=Severity.choices)
     damage_description = forms.CharField(widget=forms.Textarea(attrs={"rows": 3}), required=False)
     suspected_root_cause_customer = forms.CharField(widget=forms.Textarea(attrs={"rows": 2}), required=False)
@@ -72,6 +85,12 @@ class ClaimSubmissionForm(forms.Form):
         self.fields["customer_account"].widget.attrs.setdefault("placeholder", "Type or choose from list…")
         self.fields["product_sku"].widget.attrs.setdefault("placeholder", "Type or choose from list…")
         self.fields["batch_lot"].widget.attrs.setdefault("placeholder", "Type or choose from list…")
+        efi = self.fields.get("estimated_financial_impact")
+        if efi:
+            efi.widget.attrs.setdefault("class", _field)
+            efi.widget.attrs.setdefault("step", "0.01")
+            efi.widget.attrs.setdefault("min", "0")
+            efi.widget.attrs.setdefault("placeholder", "e.g. 125.00")
         for name, field in self.fields.items():
             w = field.widget
             if isinstance(w, DataListTextInput):

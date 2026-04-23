@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
@@ -16,6 +18,18 @@ from apps.support.utils import default_sla_resolution_deadline, generate_token
 
 from .forms import ClaimSubmissionForm
 from .telegram_notify import notify_telegram_portal_claim
+
+
+def _portal_estimated_exposure(data: dict, product) -> Decimal:
+    """Distributor-entered amount, else catalog unit price × affected qty when possible."""
+    claimed = data.get("estimated_financial_impact")
+    if claimed is not None and claimed > 0:
+        return claimed.quantize(Decimal("0.01"))
+    qty = int(data.get("quantity_affected") or 0)
+    price = product.unit_price or Decimal("0")
+    if qty > 0 and price > 0:
+        return (Decimal(qty) * price).quantize(Decimal("0.01"))
+    return Decimal("0")
 
 
 def _guess_attachment_kind(uploaded_file) -> str:
@@ -120,6 +134,7 @@ class PortalClaimSubmitView(LoginRequiredMixin, DistributorRequiredMixin, FormVi
                 damage_description=data.get("damage_description") or "",
                 suspected_root_cause_customer=data.get("suspected_root_cause_customer") or "",
                 resolution_requested=data["resolution_requested"],
+                estimated_exposure=_portal_estimated_exposure(data, product),
             )
             for f in self.request.FILES.getlist("attachments"):
                 ClaimAttachment.objects.create(
