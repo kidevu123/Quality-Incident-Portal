@@ -101,6 +101,9 @@ class TicketWorkspaceView(LoginRequiredMixin, StaffUserMixin, DetailView):
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
         if request.POST.get("action") == "delete_message":
+            if not (request.user.is_superuser or request.user.role == Role.ADMIN):
+                messages.error(request, "Only administrators can delete internal notes.")
+                return redirect(reverse("ticket_workspace", kwargs={"public_id": self.object.public_id}))
             raw_id = request.POST.get("message_id") or ""
             if not str(raw_id).isdigit():
                 messages.error(request, "Invalid message.")

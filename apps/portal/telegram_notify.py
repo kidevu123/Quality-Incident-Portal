@@ -88,10 +88,37 @@ def resolve_ticket_public_id_from_telegram_reply(chat_id: str, reply_to_message_
     return str(val).strip() if val else None
 
 
+def merged_telegram_broadcast_chat_ids() -> list[str]:
+    """
+    Env TELEGRAM_CHAT_IDS plus portal-configured team inbox IDs (deduped, env first).
+    """
+    out: list[str] = []
+    seen: set[str] = set()
+
+    def add(raw: object) -> None:
+        s = str(raw).strip()
+        if not s or s in seen:
+            return
+        seen.add(s)
+        out.append(s)
+
+    for raw in getattr(settings, "TELEGRAM_CHAT_IDS", None) or []:
+        add(raw)
+    try:
+        from apps.portal.models import TelegramTeamInboxSettings
+
+        for raw in TelegramTeamInboxSettings.load().team_chat_ids or []:
+            add(raw)
+    except Exception:  # noqa: BLE001 — e.g. migration not applied yet
+        pass
+
+    return out
+
+
 def collect_portal_claim_notification_chat_ids() -> list[str]:
     """
     Recipients for new portal claims:
-    - TELEGRAM_CHAT_IDS from env (e.g. group chat, or your personal id)
+    - TELEGRAM_CHAT_IDS from env plus portal team inbox IDs
     - Plus every superuser or internal role in _PORTAL_CLAIM_NOTIFY_ROLES who linked Telegram
     """
     ids: list[str] = []
@@ -104,7 +131,7 @@ def collect_portal_claim_notification_chat_ids() -> list[str]:
         seen.add(s)
         ids.append(s)
 
-    for raw in getattr(settings, "TELEGRAM_CHAT_IDS", None) or []:
+    for raw in merged_telegram_broadcast_chat_ids():
         add(raw)
 
     qs = User.objects.filter(
@@ -121,7 +148,7 @@ def collect_portal_claim_notification_chat_ids() -> list[str]:
 def collect_staff_working_on_claim_chat_ids() -> list[str]:
     """
     Recipients when a staff member signals they are taking a ticket (eye emoji in reply):
-    - TELEGRAM_CHAT_IDS
+    - TELEGRAM_CHAT_IDS (env) and portal team inbox IDs
     - Active superusers and roles in _STAFF_WORKING_ON_NOTIFY_ROLES with linked Telegram
     """
     ids: list[str] = []
@@ -134,7 +161,7 @@ def collect_staff_working_on_claim_chat_ids() -> list[str]:
         seen.add(s)
         ids.append(s)
 
-    for raw in getattr(settings, "TELEGRAM_CHAT_IDS", None) or []:
+    for raw in merged_telegram_broadcast_chat_ids():
         add(raw)
 
     qs = User.objects.filter(
