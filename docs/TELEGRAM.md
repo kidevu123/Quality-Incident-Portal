@@ -38,7 +38,15 @@ Telegram must reach your **public HTTPS** URL:
 
 Generate a random secret (long random string) and set **`TELEGRAM_WEBHOOK_SECRET`** in `.env` to the same value.
 
-Then call **setWebhook** (replace placeholders):
+Then register the webhook. **`allowed_updates` must include `message_reaction`** or 👀 reactions on alerts will never reach Nexus (typing commands in the bot chat does not change this).
+
+**Preferred (uses `.env`):** set `TELEGRAM_WEBHOOK_URL=https://<your-domain>/portal/telegram/webhook/` and run on the server:
+
+```bash
+docker compose exec web python manage.py telegram_set_webhook
+```
+
+**Or curl** (replace placeholders):
 
 ```bash
 curl -sS -X POST "https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/setWebhook" \

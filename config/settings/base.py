@@ -174,6 +174,8 @@ TELEGRAM_BOT_USERNAME = env("TELEGRAM_BOT_USERNAME", default="")
 TELEGRAM_CHAT_IDS = env.list("TELEGRAM_CHAT_IDS", default=[])
 # Optional: set when calling setWebhook; Telegram sends X-Telegram-Bot-Api-Secret-Token
 TELEGRAM_WEBHOOK_SECRET = env("TELEGRAM_WEBHOOK_SECRET", default="")
+# Full HTTPS URL for manage.py telegram_set_webhook (e.g. https://your.domain/portal/telegram/webhook/)
+TELEGRAM_WEBHOOK_URL = env("TELEGRAM_WEBHOOK_URL", default="")
 
 # Link tokens + webhook should use Redis in production (shared across Gunicorn workers)
 REDIS_CACHE_URL = env("REDIS_CACHE_URL", default="")

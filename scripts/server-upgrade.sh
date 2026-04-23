@@ -43,4 +43,7 @@ docker compose up -d
 echo "==> Migrations"
 docker compose exec -T web python manage.py migrate --noinput
 
+echo "==> Telegram webhook (needs TELEGRAM_WEBHOOK_URL in .env — see docs/TELEGRAM.md)"
+docker compose exec -T web python manage.py telegram_set_webhook || true
+
 echo "==> Done. Footer should match config/version.py after refresh (check with: grep VERSION config/version.py)"
