@@ -8,7 +8,7 @@ from django.views import View
 from django.views.generic import DetailView, ListView, TemplateView
 
 from apps.accounts.models import Role
-from apps.accounts.permissions import user_has_role
+from apps.accounts.permissions import user_can_use_distributor_portal, user_has_role
 from apps.claims.models import Claim, ClaimAttachment
 from apps.crm.models import CustomerAccount
 from apps.quality.models import Investigation, QualityIncident
@@ -33,7 +33,9 @@ class StaffUserMixin(UserPassesTestMixin):
         if user.is_authenticated:
             if user_has_role(user, Role.AGENT, Role.QUALITY, Role.FINANCE, Role.ADMIN):
                 return redirect(reverse("support_inbox"))
-            return redirect(reverse("portal_home"))
+            if user_can_use_distributor_portal(user):
+                return redirect(reverse("portal_home"))
+            return redirect(reverse("no_workspace_access"))
         return redirect_to_login(self.request.get_full_path(), login_url=reverse("login"))
 
 
@@ -53,7 +55,9 @@ class SupportInboxEntryView(View):
             Role.FINANCE,
             Role.ADMIN,
         ):
-            return redirect(reverse("portal_home"))
+            if user_can_use_distributor_portal(request.user):
+                return redirect(reverse("portal_home"))
+            return redirect(reverse("no_workspace_access"))
         return SupportInboxView.as_view()(request, *args, **kwargs)
 
 

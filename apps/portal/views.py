@@ -10,7 +10,7 @@ from django.views import View
 from django.views.generic import FormView, ListView, TemplateView
 
 from apps.accounts.models import Role
-from apps.accounts.permissions import user_has_role
+from apps.accounts.permissions import user_can_use_distributor_portal, user_has_role
 from apps.claims.models import AttachmentKind, Claim, ClaimAttachment
 from apps.crm.models import Batch, CustomerAccount, EndCustomer, Manufacturer, Product
 from apps.support.models import Ticket, TicketMessage, TicketPriority, TicketStatus
@@ -58,13 +58,13 @@ def _guess_attachment_kind(uploaded_file) -> str:
 
 class DistributorRequiredMixin:
     def dispatch(self, request, *args, **kwargs):
-        if not user_has_role(request.user, Role.DISTRIBUTOR, Role.ADMIN):
-            if request.user.is_authenticated:
-                return redirect(reverse("support_inbox"))
-            from django.contrib.auth.views import redirect_to_login
+        if user_can_use_distributor_portal(request.user):
+            return super().dispatch(request, *args, **kwargs)
+        if request.user.is_authenticated:
+            return redirect(reverse("no_workspace_access"))
+        from django.contrib.auth.views import redirect_to_login
 
-            return redirect_to_login(request.get_full_path(), login_url=reverse("login"))
-        return super().dispatch(request, *args, **kwargs)
+        return redirect_to_login(request.get_full_path(), login_url=reverse("login"))
 
 
 class PortalHomeView(LoginRequiredMixin, DistributorRequiredMixin, TemplateView):
