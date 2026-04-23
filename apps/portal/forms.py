@@ -72,7 +72,7 @@ class ClaimSubmissionForm(forms.Form):
         min_value=Decimal("0"),
         help_text=(
             "Approximate credit, refund, or replacement value you expect. "
-            "If you leave this blank, we estimate from catalog unit price × affected quantity when available."
+            "If you leave this blank, we estimate from catalog cost/price × affected quantity when available."
         ),
     )
     severity = forms.ChoiceField(choices=Severity.choices)

@@ -20,15 +20,27 @@ from .forms import ClaimSubmissionForm
 from .telegram_notify import notify_telegram_portal_claim
 
 
+def _product_unit_value_for_exposure(product) -> Decimal:
+    """Best available per-unit dollar estimate (Product may only have unit_cost today)."""
+    for attr in ("unit_price", "list_price", "msrp"):
+        v = getattr(product, attr, None)
+        if v is not None and v > 0:
+            return Decimal(v)
+    cost = getattr(product, "unit_cost", None)
+    if cost is not None and cost > 0:
+        return Decimal(cost)
+    return Decimal("0")
+
+
 def _portal_estimated_exposure(data: dict, product) -> Decimal:
-    """Distributor-entered amount, else catalog unit price × affected qty when possible."""
+    """Distributor-entered amount, else catalog per-unit value × affected qty when possible."""
     claimed = data.get("estimated_financial_impact")
     if claimed is not None and claimed > 0:
         return claimed.quantize(Decimal("0.01"))
     qty = int(data.get("quantity_affected") or 0)
-    price = product.unit_price or Decimal("0")
-    if qty > 0 and price > 0:
-        return (Decimal(qty) * price).quantize(Decimal("0.01"))
+    unit = _product_unit_value_for_exposure(product)
+    if qty > 0 and unit > 0:
+        return (Decimal(qty) * unit).quantize(Decimal("0.01"))
     return Decimal("0")
 
 
