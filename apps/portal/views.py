@@ -9,13 +9,25 @@ from django.views.generic import FormView, ListView, TemplateView
 
 from apps.accounts.models import Role
 from apps.accounts.permissions import user_has_role
-from apps.claims.models import Claim, ClaimAttachment
+from apps.claims.models import AttachmentKind, Claim, ClaimAttachment
 from apps.crm.models import Batch, CustomerAccount, EndCustomer, Manufacturer, Product
 from apps.support.models import Ticket, TicketMessage, TicketPriority, TicketStatus
 from apps.support.utils import default_sla_resolution_deadline, generate_token
 
 from .forms import ClaimSubmissionForm
 from .telegram_notify import notify_telegram_portal_claim
+
+
+def _guess_attachment_kind(uploaded_file) -> str:
+    ct = (getattr(uploaded_file, "content_type", None) or "").lower()
+    name = (getattr(uploaded_file, "name", "") or "").lower()
+    if ct.startswith("image/") or name.endswith(
+        (".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".heic", ".avif")
+    ):
+        return AttachmentKind.IMAGE
+    if ct.startswith("video/") or name.endswith((".mp4", ".webm", ".mov", ".m4v", ".mkv")):
+        return AttachmentKind.VIDEO
+    return AttachmentKind.DOCUMENT
 
 
 class DistributorRequiredMixin:
@@ -113,6 +125,7 @@ class PortalClaimSubmitView(LoginRequiredMixin, DistributorRequiredMixin, FormVi
                 ClaimAttachment.objects.create(
                     claim=claim,
                     file=f,
+                    kind=_guess_attachment_kind(f),
                     uploaded_by=self.request.user,
                 )
             TicketMessage.objects.create(

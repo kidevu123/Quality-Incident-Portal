@@ -33,6 +33,71 @@
       </div>
     </section>
     <section class="lg:col-span-6 space-y-4">
+      {% with c=ticket.claim %}
+      {% if c %}
+      <div class="rounded-2xl border border-violet-200/80 bg-violet-50/40 p-4 shadow-soft dark:border-violet-900/40 dark:bg-violet-950/20">
+        <h2 class="text-sm font-semibold text-violet-900 dark:text-violet-100">Distributor submission</h2>
+        <p class="mt-1 text-xs text-violet-800/80 dark:text-violet-300/90">Everything the customer entered on the portal — use this to investigate and resolve.</p>
+        <dl class="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+          <div><dt class="text-xs font-medium uppercase text-zinc-500">Defect type</dt><dd class="mt-0.5 font-medium text-zinc-900 dark:text-zinc-100">{{ c.get_defect_type_display }}</dd></div>
+          <div><dt class="text-xs font-medium uppercase text-zinc-500">Severity</dt><dd class="mt-0.5 font-medium text-zinc-900 dark:text-zinc-100">{{ c.get_severity_display }}</dd></div>
+          <div><dt class="text-xs font-medium uppercase text-zinc-500">Resolution requested</dt><dd class="mt-0.5 font-medium text-zinc-900 dark:text-zinc-100">{{ c.get_resolution_requested_display }}</dd></div>
+          <div><dt class="text-xs font-medium uppercase text-zinc-500">Qty sold / affected</dt><dd class="mt-0.5 font-medium text-zinc-900 dark:text-zinc-100">{{ c.quantity_sold }} / {{ c.quantity_affected }}</dd></div>
+          <div><dt class="text-xs font-medium uppercase text-zinc-500">Date sold</dt><dd class="mt-0.5 text-zinc-900 dark:text-zinc-100">{% if c.date_sold %}{{ c.date_sold|date:"M j, Y" }}{% else %}—{% endif %}</dd></div>
+          <div><dt class="text-xs font-medium uppercase text-zinc-500">PO / Invoice</dt><dd class="mt-0.5 break-all text-zinc-900 dark:text-zinc-100">{% if c.po_number %}{{ c.po_number }}{% else %}—{% endif %} / {% if c.invoice_number %}{{ c.invoice_number }}{% else %}—{% endif %}</dd></div>
+        </dl>
+        {% if c.end_customer %}
+        <div class="mt-4 rounded-xl bg-white/80 p-3 text-sm dark:bg-zinc-900/50">
+          <div class="text-xs font-semibold uppercase text-zinc-500">Retailer / end customer</div>
+          <div class="mt-1 font-medium">{{ c.end_customer.retailer_name }}</div>
+          {% if c.end_customer.contact_name or c.end_customer.email or c.end_customer.phone %}
+          <div class="mt-1 text-xs text-zinc-600 dark:text-zinc-400">{{ c.end_customer.contact_name }}{% if c.end_customer.email %} · {{ c.end_customer.email }}{% endif %}{% if c.end_customer.phone %} · {{ c.end_customer.phone }}{% endif %}</div>
+          {% endif %}
+        </div>
+        {% endif %}
+        {% if c.damage_description %}
+        <div class="mt-4">
+          <div class="text-xs font-semibold uppercase text-zinc-500">Damage / issue description</div>
+          <div class="mt-1 whitespace-pre-wrap rounded-xl bg-white/80 p-3 text-sm text-zinc-900 dark:bg-zinc-100 dark:bg-zinc-900/80">{{ c.damage_description }}</div>
+        </div>
+        {% endif %}
+        {% if c.suspected_root_cause_customer %}
+        <div class="mt-3">
+          <div class="text-xs font-semibold uppercase text-zinc-500">Suspected root cause (customer)</div>
+          <div class="mt-1 whitespace-pre-wrap rounded-xl bg-white/80 p-3 text-sm text-zinc-900 dark:bg-zinc-100 dark:bg-zinc-900/80">{{ c.suspected_root_cause_customer }}</div>
+        </div>
+        {% endif %}
+        <div class="mt-4 border-t border-violet-200/60 pt-4 dark:border-violet-800/50">
+          <div class="text-xs font-semibold uppercase text-zinc-500">Photos &amp; attachments</div>
+          {% if c.attachments.all %}
+          <div class="mt-2 flex flex-wrap gap-3">
+            {% for a in c.attachments.all %}
+            {% if a.kind == 'image' %}
+            <a href="{{ a.file.url }}" target="_blank" rel="noopener noreferrer" class="group block shrink-0">
+              <img src="{{ a.file.url }}" alt="Claim attachment {{ forloop.counter }}" class="h-36 w-auto max-w-[220px] rounded-xl object-cover shadow-sm ring-1 ring-zinc-200 transition group-hover:ring-violet-400 dark:ring-zinc-700" loading="lazy" decoding="async">
+              <span class="mt-1 block text-center text-[10px] text-zinc-500">Open full size</span>
+            </a>
+            {% elif a.kind == 'video' %}
+            <div class="max-w-full">
+              <video controls class="max-h-52 max-w-full rounded-xl ring-1 ring-zinc-200 dark:ring-zinc-700" preload="metadata">
+                <source src="{{ a.file.url }}" />
+              </video>
+            </div>
+            {% else %}
+            <a href="{{ a.file.url }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-zinc-800 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800">
+              <span>{{ a.get_kind_display }}</span>
+              <span class="text-violet-600 dark:text-violet-400">Download</span>
+            </a>
+            {% endif %}
+            {% endfor %}
+          </div>
+          {% else %}
+          <p class="mt-2 text-xs text-zinc-500">No files were uploaded for this claim.</p>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+      {% endwith %}
       <div class="rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-soft dark:border-zinc-800 dark:bg-zinc-900">
         <h2 class="text-sm font-semibold">Conversation</h2>
         <div class="mt-4 max-h-[480px] space-y-3 overflow-y-auto pr-1">
@@ -60,7 +125,7 @@
       {% with c=ticket.claim %}
       {% if c %}
       <div class="rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-soft dark:border-zinc-800 dark:bg-zinc-900">
-        <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Claim</h2>
+        <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Claim summary</h2>
         <dl class="mt-3 space-y-2 text-sm">
           <div class="flex justify-between gap-2"><dt class="text-zinc-500">Claim ID</dt><dd class="font-medium">{{ c.public_id }}</dd></div>
           <div class="flex justify-between gap-2"><dt class="text-zinc-500">SKU</dt><dd>{{ c.product.sku }}</dd></div>
@@ -68,6 +133,7 @@
           <div class="flex justify-between gap-2"><dt class="text-zinc-500">Exposure</dt><dd>${{ c.estimated_exposure }}</dd></div>
           <div class="flex justify-between gap-2"><dt class="text-zinc-500">Zoho SO</dt><dd class="truncate">{{ c.zoho_replacement_so_number|default:"—" }}</dd></div>
         </dl>
+        <p class="mt-3 text-xs text-zinc-500">Full distributor narrative and files are in <strong>Distributor submission</strong> (center column).</p>
         <form method="post" class="mt-4">
           {% csrf_token %}
           <input type="hidden" name="action" value="zoho_replacement">

@@ -1,7 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.views import redirect_to_login
-from django.db.models import Count, Sum
+from django.db.models import Count, Prefetch, Sum
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.views import View
@@ -9,7 +9,7 @@ from django.views.generic import DetailView, ListView, TemplateView
 
 from apps.accounts.models import Role
 from apps.accounts.permissions import user_has_role
-from apps.claims.models import Claim
+from apps.claims.models import Claim, ClaimAttachment
 from apps.crm.models import CustomerAccount
 from apps.quality.models import Investigation, QualityIncident
 from apps.support.models import Ticket, TicketMessage, TicketStatus
@@ -77,12 +77,15 @@ class TicketWorkspaceView(LoginRequiredMixin, StaffUserMixin, DetailView):
     slug_url_kwarg = "public_id"
 
     def get_queryset(self):
+        att_qs = ClaimAttachment.objects.select_related("uploaded_by").order_by("created_at")
         return Ticket.objects.select_related("customer_account", "assignee").prefetch_related(
             "messages__author",
             "claim__product__manufacturer",
             "claim__batch",
+            "claim__end_customer",
             "claim__reimbursement",
             "claim__zoho_logs",
+            Prefetch("claim__attachments", queryset=att_qs),
         )
 
     def get_context_data(self, **kwargs):
