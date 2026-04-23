@@ -14,8 +14,10 @@ env = environ.Env(
 
 environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 
-# Shown in the site footer; override per environment with NEXUS_APP_VERSION (e.g. CI git sha).
-NEXUS_APP_VERSION = env("NEXUS_APP_VERSION", default=NEXUS_VERSION_DEFAULT)
+# Footer version: always matches config/version.py unless CI stamps NEXUS_APP_VERSION_OVERRIDE.
+# (Legacy NEXUS_APP_VERSION in .env is ignored so a stale pin cannot hide real releases.)
+_override = (env("NEXUS_APP_VERSION_OVERRIDE", default="") or "").strip()
+NEXUS_APP_VERSION = _override or NEXUS_VERSION_DEFAULT
 
 SECRET_KEY = env("DJANGO_SECRET_KEY", default="change-me-in-production-not-for-deploy")
 DEBUG = env.bool("DJANGO_DEBUG", default=False)

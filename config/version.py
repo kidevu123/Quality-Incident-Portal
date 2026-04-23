@@ -1,7 +1,7 @@
 """Application release version.
 
 Bump VERSION here immediately with every release (merge to main / tag / deploy)—do not leave it stale.
-Override at runtime with NEXUS_APP_VERSION in the environment if needed (e.g. CI git SHA).
+Optional CI stamp: set NEXUS_APP_VERSION_OVERRIDE in the environment (rare); do not pin version in .env otherwise.
 """
 
-VERSION = "1.3.1"
+VERSION = "1.3.2"

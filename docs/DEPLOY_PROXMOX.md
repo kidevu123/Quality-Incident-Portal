@@ -107,6 +107,8 @@ nano .env   # or vim
    - `BEHIND_TLS_PROXY=true` (if TLS terminates at Nginx/reverse proxy in front of this stack)
    - `CSRF_TRUSTED_ORIGINS=https://your.domain`
 
+5. **Footer version** — comes from `config/version.py` in the code you deploy. If you ever added `NEXUS_APP_VERSION` to `.env`, remove it (it is no longer read; a stale value could make the footer look out of date). For an optional CI-only stamp, use `NEXUS_APP_VERSION_OVERRIDE`.
+
 ---
 
 ## 5. Build and start
