@@ -4,10 +4,12 @@ New distributor claims (`/portal/claims/new/`) can trigger Telegram messages.
 
 ## Who receives claim alerts?
 
-1. **Every chat ID** listed in `TELEGRAM_CHAT_IDS` (comma-separated). Use this for a **group/supergroup**, or your **personal numeric ID**, so you (the owner) always get every claim without linking in the UI.
-2. **Plus** every **active** user who is a **superuser** or has role **Support Agent**, **Quality Manager**, or **Administrator** and has linked Telegram on **`/accounts/telegram/`** (their personal `telegram_chat_id`).
+1. **Every chat ID** listed in `TELEGRAM_CHAT_IDS` (comma-separated). Use this for a **team supergroup** (recommended if you want one shared inbox and **group chat** to discuss how to resolve claims), for your **personal numeric ID**, or both. Supergroup IDs are typically negative (e.g. `-100…`). Add the bot to the group first; for **message reactions** on bot messages, Telegram usually requires the bot to be a **group admin**.
+2. **Plus** every **active** user who is a **superuser** or has role **Support Agent**, **Quality Manager**, or **Administrator** and has linked Telegram on **`/accounts/telegram/`** (their personal `telegram_chat_id` — a **private** DM with the bot).
 
 **Distributors** do **not** get new-claim pings from this path. **Finance** does not get automatic new-claim pings either; add them via `TELEGRAM_CHAT_IDS` if they should see every submission.
+
+**Team discussion:** Ordinary messages in the group are just Telegram chat among humans. Nexus does **not** ingest free-form group chatter into tickets. To signal “I’m on this claim” from the group, staff still **reply** to the bot’s alert with 👀 / 👁, **react** with 👀 / 👁, or include `TKT-…` / `CLM-…` in a message (see below).
 
 ### “Someone is on it” (eye emoji)
 

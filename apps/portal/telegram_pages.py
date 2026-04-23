@@ -44,6 +44,9 @@ class TelegramSettingsView(InternalTeamTelegramMixin, LoginRequiredMixin, Templa
         else:
             ctx["telegram_deep_link"] = ""
         ctx["webhook_url"] = self.request.build_absolute_uri(reverse("telegram_webhook"))
+        ctx["telegram_broadcast_chat_count"] = len(
+            getattr(settings, "TELEGRAM_CHAT_IDS", None) or []
+        )
         return ctx
 
 
