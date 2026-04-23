@@ -63,12 +63,14 @@ class TelegramWebhookView(View):
                     User.objects.filter(pk=uid).update(telegram_chat_id=cid)
                     send_telegram_plain_text(
                         str(cid),
-                        "Nexus Resolve: this chat is linked to your account. You will receive new distributor claim alerts here if you are an Administrator or superuser.",
+                        "<b>Nexus Resolve</b>\nThis chat is linked to your account. New distributor claim alerts appear here if you are an Administrator or superuser.",
+                        parse_mode="HTML",
                     )
                 else:
                     send_telegram_plain_text(
                         str(chat_id),
-                        "Nexus Resolve: link expired or invalid. Open Telegram settings in Nexus and tap “Open Telegram” again.",
+                        "<b>Nexus Resolve</b>\nLink expired or invalid. Open Telegram settings in Nexus and tap “Open Telegram” again.",
+                        parse_mode="HTML",
                     )
 
         return JsonResponse({"ok": True})

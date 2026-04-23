@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import html
 import logging
 from typing import TYPE_CHECKING
 
@@ -18,18 +19,22 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def send_telegram_plain_text(chat_id: str, text: str) -> None:
+def _tg_h(s: str) -> str:
+    """Escape text for Telegram HTML parse_mode."""
+    return html.escape(s or "", quote=False)
+
+
+def send_telegram_plain_text(chat_id: str, text: str, *, parse_mode: str | None = None) -> None:
     """Single sendMessage; failures logged only."""
     token = (getattr(settings, "TELEGRAM_BOT_TOKEN", None) or "").strip()
     if not token or not chat_id:
         return
     url = f"https://api.telegram.org/bot{token}/sendMessage"
+    body: dict = {"chat_id": chat_id, "text": text}
+    if parse_mode:
+        body["parse_mode"] = parse_mode
     try:
-        resp = requests.post(
-            url,
-            json={"chat_id": chat_id, "text": text},
-            timeout=15,
-        )
+        resp = requests.post(url, json=body, timeout=15)
         resp.raise_for_status()
         payload = resp.json()
         if not payload.get("ok"):
@@ -79,17 +84,23 @@ def notify_telegram_portal_claim(claim: "Claim", ticket: "Ticket", submitted_by)
     retailer = "—"
     if claim.end_customer_id:
         retailer = claim.end_customer.retailer_name
-    lines = [
-        "New claim — distributor portal",
-        f"Claim: {claim.public_id}",
-        f"Ticket: {ticket.public_id}",
-        f"Account: {claim.customer_account.name}",
-        f"Product: {claim.product.sku}",
-        f"Retailer: {retailer}",
-        f"Severity: {claim.get_severity_display()}",
-        f"Submitted by: {submitted_by.username}",
-    ]
-    text = "\n".join(lines)
+    sev = claim.get_severity_display()
+    # Compact layout: emoji cues, bold highlights, IDs in <code>; user text escaped for HTML.
+    text = "\n".join(
+        [
+            "<b>🔔 New claim</b> · portal",
+            "",
+            f"<code>{_tg_h(claim.public_id)}</code>",
+            f"<code>{_tg_h(ticket.public_id)}</code>",
+            "",
+            f"🏢 <b>{_tg_h(claim.customer_account.name)}</b>",
+            f"📦 <b>{_tg_h(claim.product.sku)}</b>",
+            f"🏪 {_tg_h(retailer)}",
+            "",
+            f"⚠️ <b>{_tg_h(sev)}</b>",
+            f"👤 {_tg_h(submitted_by.username)}",
+        ]
+    )
 
     for chat_id in chat_ids:
-        send_telegram_plain_text(chat_id, text)
+        send_telegram_plain_text(chat_id, text, parse_mode="HTML")
