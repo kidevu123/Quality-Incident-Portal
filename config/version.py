@@ -4,4 +4,4 @@ Bump VERSION here immediately with every release (merge to main / tag / deploy)â
 Override at runtime with NEXUS_APP_VERSION in the environment if needed (e.g. CI git SHA).
 """
 
-VERSION = "1.1.0"
+VERSION = "1.2.0"

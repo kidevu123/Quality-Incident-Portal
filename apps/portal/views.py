@@ -14,6 +14,7 @@ from apps.support.models import Ticket, TicketMessage, TicketPriority, TicketSta
 from apps.support.utils import default_sla_resolution_deadline, generate_token
 
 from .forms import ClaimSubmissionForm
+from .telegram_notify import notify_telegram_portal_claim
 
 
 class DistributorRequiredMixin:
@@ -122,6 +123,7 @@ class PortalClaimSubmitView(LoginRequiredMixin, DistributorRequiredMixin, FormVi
         from apps.automation.engine import run_automation_for_ticket
 
         run_automation_for_ticket(ticket)
+        notify_telegram_portal_claim(claim, ticket, self.request.user)
         messages.success(self.request, f"Claim {claim.public_id} submitted.")
         return super().form_valid(form)
 

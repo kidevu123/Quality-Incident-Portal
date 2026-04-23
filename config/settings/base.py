@@ -163,6 +163,10 @@ ZOHO_REPLACEMENT_SO_THRESHOLD = env.float("ZOHO_REPLACEMENT_SO_THRESHOLD", defau
 HOT_BATCH_CLAIM_THRESHOLD = env.int("HOT_BATCH_CLAIM_THRESHOLD", default=3)
 AUTO_APPROVE_MAX_AMOUNT = env.float("AUTO_APPROVE_MAX_AMOUNT", default=250.0)
 
+# Telegram — optional portal claim alerts (BotFather token + numeric chat IDs, comma-separated)
+TELEGRAM_BOT_TOKEN = env("TELEGRAM_BOT_TOKEN", default="")
+TELEGRAM_CHAT_IDS = env.list("TELEGRAM_CHAT_IDS", default=[])
+
 FILE_UPLOAD_MAX_MEMORY_SIZE = 25 * 1024 * 1024
 DATA_UPLOAD_MAX_MEMORY_SIZE = 30 * 1024 * 1024
 
