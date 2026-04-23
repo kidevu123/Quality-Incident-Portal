@@ -7,7 +7,11 @@ New distributor claims (`/portal/claims/new/`) can trigger Telegram messages.
 1. **Every chat ID** listed in `TELEGRAM_CHAT_IDS` (comma-separated). Use this for a **group/supergroup**, or your **personal numeric ID**, so you (the owner) always get every claim without linking in the UI.
 2. **Plus** every **active** user who is a **superuser** or has role **Support Agent**, **Quality Manager**, or **Administrator** and has linked Telegram on **`/accounts/telegram/`** (their personal `telegram_chat_id`).
 
-**Distributors** and **Finance** users do **not** get claim pings from this path (even if they somehow open the link). **Finance** is excluded; add them via `TELEGRAM_CHAT_IDS` if needed.
+**Distributors** do **not** get new-claim pings from this path. **Finance** does not get automatic new-claim pings either; add them via `TELEGRAM_CHAT_IDS` if they should see every submission.
+
+### “Someone is on it” (eye emoji)
+
+On the **staff ticket workspace**, if a teammate sends a reply or internal note that contains **👁** or **👀**, Nexus sends a Telegram HTML alert to **`TELEGRAM_CHAT_IDS`** plus every linked **Support Agent**, **Quality Manager**, **Administrator**, **Finance**, and **superuser** — except the sender’s own linked chat (so you don’t ping yourself). The same person/ticket can only trigger this about once every **10 minutes** (spam guard).
 
 ## 1. Create the bot
 

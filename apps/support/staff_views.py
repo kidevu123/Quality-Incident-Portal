@@ -12,6 +12,10 @@ from apps.accounts.permissions import user_has_role
 from apps.claims.models import Claim, ClaimAttachment
 from apps.crm.models import CustomerAccount
 from apps.quality.models import Investigation, QualityIncident
+from apps.portal.telegram_notify import (
+    message_body_signals_working_on_claim,
+    notify_telegram_staff_working_on_ticket,
+)
 from apps.support.models import Ticket, TicketMessage, TicketStatus
 
 
@@ -117,6 +121,8 @@ class TicketWorkspaceView(LoginRequiredMixin, StaffUserMixin, DetailView):
                 body=body,
                 is_internal=internal,
             )
+            if message_body_signals_working_on_claim(body):
+                notify_telegram_staff_working_on_ticket(self.object, request.user)
         new_status = request.POST.get("status")
         if new_status and new_status in dict(TicketStatus.choices):
             self.object.status = new_status

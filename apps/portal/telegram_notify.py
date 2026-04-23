@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 import requests
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 
 from apps.accounts.models import Role, User
@@ -23,6 +24,14 @@ _PORTAL_CLAIM_NOTIFY_ROLES = (
     Role.ADMIN,
     Role.AGENT,
     Role.QUALITY,
+)
+
+# Linked Telegram + env chat IDs for “someone is working this claim” (👁 / 👀 in staff reply).
+_STAFF_WORKING_ON_NOTIFY_ROLES = (
+    Role.ADMIN,
+    Role.AGENT,
+    Role.QUALITY,
+    Role.FINANCE,
 )
 
 
@@ -78,6 +87,87 @@ def collect_portal_claim_notification_chat_ids() -> list[str]:
         add(cid)
 
     return ids
+
+
+def collect_staff_working_on_claim_chat_ids() -> list[str]:
+    """
+    Recipients when a staff member signals they are taking a ticket (eye emoji in reply):
+    - TELEGRAM_CHAT_IDS
+    - Active superusers and roles in _STAFF_WORKING_ON_NOTIFY_ROLES with linked Telegram
+    """
+    ids: list[str] = []
+    seen: set[str] = set()
+
+    def add(raw: object) -> None:
+        s = str(raw).strip()
+        if not s or s in seen:
+            return
+        seen.add(s)
+        ids.append(s)
+
+    for raw in getattr(settings, "TELEGRAM_CHAT_IDS", None) or []:
+        add(raw)
+
+    qs = User.objects.filter(
+        Q(is_superuser=True) | Q(role__in=_STAFF_WORKING_ON_NOTIFY_ROLES),
+        telegram_chat_id__isnull=False,
+        is_active=True,
+    ).values_list("telegram_chat_id", flat=True)
+    for cid in qs:
+        add(cid)
+
+    return ids
+
+
+def message_body_signals_working_on_claim(body: str) -> bool:
+    """True if staff message should broadcast ‘working on this’ (👀 or 👁 in the text)."""
+    if not (body and body.strip()):
+        return False
+    # 👀 U+1F440, 👁 U+1F441 (👁️ uses same base code point)
+    return "\U0001f440" in body or "\U0001f441" in body
+
+
+def notify_telegram_staff_working_on_ticket(ticket: "Ticket", actor) -> None:
+    """Tell the team (Telegram) that ``actor`` is working this ticket; skip duplicate within 10 min."""
+    token = (getattr(settings, "TELEGRAM_BOT_TOKEN", None) or "").strip()
+    if not token or not actor or not getattr(actor, "pk", None):
+        return
+
+    from django.core.cache import cache
+
+    rl_key = f"tg:work_on:v1:{ticket.pk}:{actor.pk}"
+    if cache.get(rl_key):
+        return
+    cache.set(rl_key, 1, timeout=600)
+
+    chat_ids = collect_staff_working_on_claim_chat_ids()
+    if not chat_ids:
+        return
+
+    actor_cid = ""
+    if getattr(actor, "telegram_chat_id", None):
+        actor_cid = str(actor.telegram_chat_id).strip()
+
+    uname = actor.get_username() if hasattr(actor, "get_username") else str(actor.pk)
+    lines = [
+        "<b>👁 On it</b>",
+        "",
+        f"<b>{_tg_h(uname)}</b> is working this ticket.",
+        "",
+        f"<code>{_tg_h(ticket.public_id)}</code>",
+    ]
+    try:
+        claim = ticket.claim
+    except ObjectDoesNotExist:
+        claim = None
+    if claim is not None:
+        lines.append(f"<code>{_tg_h(claim.public_id)}</code>")
+
+    text = "\n".join(lines)
+    for cid in chat_ids:
+        if actor_cid and cid == actor_cid:
+            continue
+        send_telegram_plain_text(cid, text, parse_mode="HTML")
 
 
 def notify_telegram_portal_claim(claim: "Claim", ticket: "Ticket", submitted_by) -> None:
