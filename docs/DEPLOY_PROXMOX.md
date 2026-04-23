@@ -197,6 +197,16 @@ gunzip -c nexus-YYYY-MM-DD.sql.gz | docker compose exec -T db psql -U nexus -d n
 
 ## 9. Upgrades
 
+**Important:** After `pct enter` you land in `/root`. That is **not** the app — Git lives under **`/opt/nexus-resolve`**. If you see `fatal: not a git repository`, you are in the wrong directory.
+
+**One command (recommended):**
+
+```bash
+bash /opt/nexus-resolve/scripts/server-upgrade.sh
+```
+
+**Manual (same steps):**
+
 ```bash
 cd /opt/nexus-resolve
 git pull
@@ -211,6 +221,7 @@ docker compose exec web python manage.py migrate --noinput
 
 | Symptom | Check |
 |--------|--------|
+| `fatal: not a git repository` in the CT | You are in `~` (e.g. `/root`). Run `cd /opt/nexus-resolve` or `bash /opt/nexus-resolve/scripts/server-upgrade.sh`. |
 | `web` unhealthy | `docker compose logs web` — often missing/invalid `DJANGO_SECRET_KEY` or DB URL |
 | 502 from Nginx | `web` not healthy; `curl http://127.0.0.1:8000/health/live/` inside `web` container |
 | CSRF errors | `CSRF_TRUSTED_ORIGINS` must match browser URL scheme + host |
