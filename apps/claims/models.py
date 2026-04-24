@@ -137,6 +137,12 @@ class ClaimAttachment(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def upload_display_name(self) -> str:
+        if not self.file:
+            return ""
+        name = self.file.name
+        return name.rsplit("/", 1)[-1] if name else ""
+
 
 class Reimbursement(models.Model):
     claim = models.OneToOneField(Claim, on_delete=models.CASCADE, related_name="reimbursement")

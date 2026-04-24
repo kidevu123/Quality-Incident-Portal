@@ -187,8 +187,9 @@ if REDIS_CACHE_URL:
         }
     }
 
-FILE_UPLOAD_MAX_MEMORY_SIZE = 25 * 1024 * 1024
-DATA_UPLOAD_MAX_MEMORY_SIZE = 30 * 1024 * 1024
+# Allow several photos/videos per claim; reverse proxies may need matching client_max_body_size.
+FILE_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024
+DATA_UPLOAD_MAX_MEMORY_SIZE = 100 * 1024 * 1024
 
 LOGGING = {
     "version": 1,

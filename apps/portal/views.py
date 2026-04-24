@@ -3,7 +3,7 @@ from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
-from django.http import JsonResponse
+from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.views import View
@@ -67,6 +67,13 @@ class DistributorRequiredMixin:
         return redirect_to_login(request.get_full_path(), login_url=reverse("login"))
 
 
+def portal_user_can_access_ticket(user, ticket) -> bool:
+    """Portal users may open tickets they filed; admins/superusers may open any ticket."""
+    if user.is_superuser or user.role == Role.ADMIN:
+        return True
+    return ticket.requester_id is not None and ticket.requester_id == user.pk
+
+
 class PortalHomeView(LoginRequiredMixin, DistributorRequiredMixin, TemplateView):
     template_name = "portal/home.html"
 
@@ -77,14 +84,12 @@ class PortalClaimListView(LoginRequiredMixin, DistributorRequiredMixin, ListView
     paginate_by = 20
 
     def get_queryset(self):
-        # Demo: distributor sees claims for first linked account or all if admin
         qs = Claim.objects.select_related("ticket", "product", "customer_account")
-        if self.request.user.role == Role.ADMIN:
+        user = self.request.user
+        if user.is_superuser or user.role == Role.ADMIN:
             return qs.order_by("-created_at")
-        account = CustomerAccount.objects.order_by("id").first()
-        if account:
-            return qs.filter(customer_account=account).order_by("-created_at")
-        return qs.none()
+        # Distributors only see claims they submitted (ticket.requester), not an arbitrary account.
+        return qs.filter(ticket__requester=user).order_by("-created_at")
 
 
 class PortalClaimSubmitView(LoginRequiredMixin, DistributorRequiredMixin, FormView):
@@ -149,6 +154,8 @@ class PortalClaimSubmitView(LoginRequiredMixin, DistributorRequiredMixin, FormVi
                 estimated_exposure=_portal_estimated_exposure(data, product),
             )
             for f in self.request.FILES.getlist("attachments"):
+                if not f.name:
+                    continue
                 ClaimAttachment.objects.create(
                     claim=claim,
                     file=f,
@@ -170,23 +177,68 @@ class PortalClaimSubmitView(LoginRequiredMixin, DistributorRequiredMixin, FormVi
 
 
 class PortalTicketThreadView(LoginRequiredMixin, DistributorRequiredMixin, View):
+    def _get_ticket(self, public_id: str) -> Ticket:
+        ticket = get_object_or_404(
+            Ticket.objects.select_related("claim").prefetch_related(
+                "messages__author",
+                "claim__attachments",
+            ),
+            public_id=public_id,
+        )
+        if not portal_user_can_access_ticket(self.request.user, ticket):
+            raise Http404("Ticket not found.")
+        return ticket
+
     def get(self, request, public_id):
-        ticket = get_object_or_404(Ticket, public_id=public_id)
+        ticket = self._get_ticket(public_id)
         claim = getattr(ticket, "claim", None)
+        attachments = list(claim.attachments.all()) if claim else []
         return render(
             request,
             "portal/ticket_thread.html",
             {
                 "ticket": ticket,
                 "claim": claim,
+                "claim_attachments": attachments,
                 "messages": ticket.messages.all(),
                 "ticket_status_poll_url": reverse("portal_ticket_status", kwargs={"public_id": public_id}),
             },
         )
 
     def post(self, request, public_id):
-        ticket = get_object_or_404(Ticket, public_id=public_id)
+        ticket = self._get_ticket(public_id)
         body = (request.POST.get("body") or "").strip()
+        claim = getattr(ticket, "claim", None)
+        files = [f for f in request.FILES.getlist("attachments") if getattr(f, "name", None)]
+
+        if files:
+            if not claim:
+                messages.error(request, "This ticket has no claim record; files could not be attached.")
+                return redirect("portal_ticket", public_id=public_id)
+            else:
+                n = 0
+                for f in files:
+                    ClaimAttachment.objects.create(
+                        claim=claim,
+                        file=f,
+                        kind=_guess_attachment_kind(f),
+                        uploaded_by=request.user,
+                    )
+                    n += 1
+                msg_body = body
+                if not msg_body:
+                    msg_body = (
+                        f"Uploaded {n} additional file(s) (photos/videos/documents) for the team to review."
+                    )
+                TicketMessage.objects.create(
+                    ticket=ticket,
+                    author=request.user,
+                    body=msg_body,
+                    is_internal=False,
+                )
+                messages.success(request, f"Uploaded {n} file(s).")
+                return redirect("portal_ticket", public_id=public_id)
+
         if body:
             TicketMessage.objects.create(
                 ticket=ticket,
@@ -202,9 +254,11 @@ class PortalTicketStatusView(LoginRequiredMixin, DistributorRequiredMixin, View)
 
     def get(self, request, public_id):
         ticket = get_object_or_404(
-            Ticket.objects.only("public_id", "status", "updated_at"),
+            Ticket.objects.only("public_id", "status", "updated_at", "requester_id"),
             public_id=public_id,
         )
+        if not portal_user_can_access_ticket(request.user, ticket):
+            raise Http404("Ticket not found.")
         return JsonResponse(
             {
                 "status": ticket.status,

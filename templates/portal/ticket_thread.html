@@ -11,6 +11,19 @@
   {% endif %}
 </div>
 <p class="mt-2 text-xs text-zinc-500">Status updates when your Nexus team changes the ticket. This page rechecks every few seconds.</p>
+{% if claim_attachments %}
+<div class="mt-6 rounded-2xl border border-zinc-200 bg-zinc-50/80 p-4 dark:border-zinc-800 dark:bg-zinc-950/50">
+  <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Your evidence</h2>
+  <ul class="mt-3 space-y-2 text-sm">
+    {% for a in claim_attachments %}
+    <li class="flex flex-wrap items-center gap-x-2 gap-y-1">
+      <a href="{{ a.file.url }}" target="_blank" rel="noopener noreferrer" class="font-medium text-violet-600 hover:underline dark:text-violet-400">{{ a.upload_display_name }}</a>
+      <span class="text-xs text-zinc-500">{{ a.get_kind_display }} · {{ a.created_at|localtime|date:"M j, Y g:i A" }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
 <div class="mt-6 space-y-3">
   {% for m in messages %}
   {% if not m.is_internal %}
@@ -21,12 +34,39 @@
   {% endif %}
   {% endfor %}
 </div>
-<form method="post" class="mt-6 space-y-3">
+<form method="post" enctype="multipart/form-data" class="mt-6 space-y-4">
   {% csrf_token %}
-  <textarea name="body" rows="4" class="w-full min-h-[8rem] resize-y rounded-2xl border border-zinc-200 bg-white px-3 py-3 text-sm leading-relaxed text-zinc-900 shadow-sm placeholder:text-zinc-400 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/25 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500" placeholder="Message support…"></textarea>
-  <button class="min-h-[48px] w-full rounded-xl bg-zinc-900 px-4 py-2 text-sm font-medium text-white dark:bg-white dark:text-zinc-900 sm:w-auto">Send</button>
+  <div>
+    <label class="block text-xs font-semibold uppercase tracking-wide text-zinc-500">Message (optional if only adding files)</label>
+    <textarea name="body" rows="4" class="mt-1 w-full min-h-[8rem] resize-y rounded-2xl border border-zinc-200 bg-white px-3 py-3 text-sm leading-relaxed text-zinc-900 shadow-sm placeholder:text-zinc-400 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/25 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500" placeholder="Message support…"></textarea>
+  </div>
+  {% if claim %}
+  <div>
+    <label class="block text-xs font-semibold uppercase tracking-wide text-zinc-500">Add photos or videos</label>
+    <p class="mt-1 text-xs text-zinc-500">You can add more evidence after submitting your claim. On some phones, use “Add another file” if multi-select is not available.</p>
+    <div id="portal-followup-files" class="mt-2 space-y-2">
+      <input type="file" name="attachments" multiple accept="image/*,video/*,.heic,.heif,.mov,.mp4,.webm" class="w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-violet-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-violet-900 dark:file:bg-violet-950 dark:file:text-violet-100">
+    </div>
+    <button type="button" id="portal-add-file-slot" class="mt-2 text-sm font-medium text-violet-600 hover:underline dark:text-violet-400">Add another file</button>
+  </div>
+  {% endif %}
+  <button type="submit" class="min-h-[48px] w-full rounded-xl bg-zinc-900 px-4 py-2 text-sm font-medium text-white dark:bg-white dark:text-zinc-900 sm:w-auto">Send</button>
 </form>
 <script>
+(function () {
+  var addBtn = document.getElementById("portal-add-file-slot");
+  var wrap = document.getElementById("portal-followup-files");
+  if (addBtn && wrap) {
+    addBtn.addEventListener("click", function () {
+      var inp = document.createElement("input");
+      inp.type = "file";
+      inp.name = "attachments";
+      inp.accept = "image/*,video/*,.heic,.heif,.mov,.mp4,.webm";
+      inp.className = "w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-violet-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-violet-900 dark:file:bg-violet-950 dark:file:text-violet-100";
+      wrap.appendChild(inp);
+    });
+  }
+})();
 (function () {
   var el = document.getElementById("portal-ticket-status");
   var url = "{{ ticket_status_poll_url|escapejs }}";
