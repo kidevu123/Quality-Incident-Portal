@@ -104,7 +104,9 @@ def create_inventory_sales_order_payload(claim) -> Dict[str, Any]:
     """Build a Zoho Inventory sales order body for a claim.
 
     The proxy fills in organization_id from zoho_orgs based on X-Brand;
-    we only send the per-order fields.
+    we only send the per-order fields. The replacement context goes in
+    `notes` rather than a custom_field so the call doesn't depend on a
+    specific custom-field schema being configured per Zoho org.
     """
     customer = claim.customer_account
     line = {
@@ -117,8 +119,8 @@ def create_inventory_sales_order_payload(claim) -> Dict[str, Any]:
         "customer_id": customer.zoho_account_id or "",
         "reference_number": claim.public_id,
         "line_items": [line],
-        "custom_fields": [
-            {"label": "Order Type", "value": "Warranty / Replacement"},
-        ],
-        "notes": f"Replacement for claim {claim.public_id} — ticket {claim.ticket.public_id}",
+        "notes": (
+            f"Replacement for claim {claim.public_id} — ticket {claim.ticket.public_id}. "
+            f"Order Type: Warranty / Replacement."
+        ),
     }

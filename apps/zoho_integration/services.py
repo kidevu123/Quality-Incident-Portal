@@ -54,8 +54,14 @@ def replacement_so_requires_approval(claim: Claim) -> bool:
     return exposure >= float(settings.ZOHO_REPLACEMENT_SO_THRESHOLD)
 
 
-@transaction.atomic
 def create_replacement_sales_order(*, claim: Claim, actor) -> ZohoSyncLog:
+    """Create a replacement Zoho SO for a claim. Returns the resulting ZohoSyncLog.
+
+    The function is *not* wrapped in @transaction.atomic so the sync log persists
+    on failure (otherwise an exception in proxy_call rolls back the FAILED log
+    too, leaving "see sync logs" empty for ops). Each side-effect (log create,
+    log update on failure, claim/ticket update on success) is its own DB write.
+    """
     if ZohoPushDedupe.objects.filter(fingerprint=_fingerprint(claim, "replacement_so")).exists():
         raise ValueError("Duplicate replacement order already recorded for this claim.")
 
@@ -90,7 +96,6 @@ def create_replacement_sales_order(*, claim: Claim, actor) -> ZohoSyncLog:
     try:
         so_number: str
         if not zoho_proxy_is_configured():
-            # Proxy not wired in this environment — simulate so the workflow stays usable in dev.
             so_number = f"SIM-SO-{claim.public_id}"
             log.status = ZohoSyncLog.Status.SUCCESS
             log.response_payload = {"simulated": True, "salesorder_number": so_number}
@@ -102,7 +107,6 @@ def create_replacement_sales_order(*, claim: Claim, actor) -> ZohoSyncLog:
                 method="POST",
                 payload=payload,
             )
-            # Zoho's response shape: {"salesorder": {...}, ...} or unwrapped depending on product config.
             so_obj = data.get("salesorder") if isinstance(data, dict) else None
             so_number = str(
                 (so_obj or {}).get("salesorder_number")
@@ -114,7 +118,17 @@ def create_replacement_sales_order(*, claim: Claim, actor) -> ZohoSyncLog:
             log.status = ZohoSyncLog.Status.SUCCESS
             log.response_payload = data
             log.save(update_fields=["status", "response_payload", "updated_at"])
+    except ZohoAPIError as exc:
+        logger.exception("Zoho replacement SO failed")
+        log.status = ZohoSyncLog.Status.FAILED
+        log.error_message = _format_zoho_error(exc)
+        log.response_payload = exc.payload
+        log.attempt_count = (log.attempt_count or 0) + 1
+        log.save(update_fields=["status", "error_message", "response_payload", "attempt_count", "updated_at"])
+        raise
 
+    # Success path — DB writes that should travel together.
+    with transaction.atomic():
         claim.zoho_replacement_so_number = so_number
         claim.save(update_fields=["zoho_replacement_so_number", "updated_at"])
 
@@ -139,12 +153,23 @@ def create_replacement_sales_order(*, claim: Claim, actor) -> ZohoSyncLog:
             object_id=claim.public_id,
             after={"zoho_replacement_so_number": claim.zoho_replacement_so_number},
         )
-    except ZohoAPIError as exc:
-        logger.exception("Zoho replacement SO failed")
-        log.status = ZohoSyncLog.Status.FAILED
-        log.error_message = str(exc)
-        log.response_payload = exc.payload
-        log.attempt_count += 1
-        log.save(update_fields=["status", "error_message", "response_payload", "attempt_count", "updated_at"])
-        raise
     return log
+
+
+def _format_zoho_error(exc: ZohoAPIError) -> str:
+    """Pull the human-readable message out of the proxy error payload.
+
+    The proxy nests Zoho's response under detail.error.{code,message}. We
+    surface that directly for the toast so ops sees the real cause.
+    """
+    payload = exc.payload or {}
+    detail = payload.get("detail") if isinstance(payload, dict) else None
+    err = (detail or {}).get("error") if isinstance(detail, dict) else None
+    if isinstance(err, dict):
+        code = err.get("code") or err.get("internal_code")
+        msg = err.get("message") or ""
+        if code and msg:
+            return f"{msg} (Zoho code {code})"
+        if msg:
+            return str(msg)
+    return str(exc)
