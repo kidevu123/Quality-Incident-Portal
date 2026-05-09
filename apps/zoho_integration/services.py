@@ -13,7 +13,12 @@ from apps.accounts.models import Role
 from apps.auditlog.services import write_audit
 from apps.claims.models import Approval, Claim
 from apps.support.models import Ticket, TicketMessage, TicketStatus
-from apps.zoho_integration.client import ZohoAPIError, ZohoClient, create_inventory_sales_order_payload
+from apps.zoho_integration.client import (
+    ZohoAPIError,
+    create_inventory_sales_order_payload,
+    is_configured as zoho_proxy_is_configured,
+    proxy_call,
+)
 from apps.zoho_integration.models import ZohoPushDedupe, ZohoSyncLog
 
 logger = logging.getLogger(__name__)
@@ -82,33 +87,29 @@ def create_replacement_sales_order(*, claim: Claim, actor) -> ZohoSyncLog:
         request_payload=payload,
     )
 
-    client = ZohoClient()
     try:
         so_number: str
-        if not all(
-            [
-                settings.ZOHO_CLIENT_ID,
-                settings.ZOHO_CLIENT_SECRET,
-                settings.ZOHO_REFRESH_TOKEN,
-            ]
-        ):
+        if not zoho_proxy_is_configured():
+            # Proxy not wired in this environment — simulate so the workflow stays usable in dev.
             so_number = f"SIM-SO-{claim.public_id}"
             log.status = ZohoSyncLog.Status.SUCCESS
             log.response_payload = {"simulated": True, "salesorder_number": so_number}
             log.save(update_fields=["status", "response_payload", "updated_at"])
         else:
-            org = settings.ZOHO_ORG_ID
-            data = client.request(
-                "POST",
-                "/inventory/v1/salesorders",
-                params={"organization_id": org},
-                json=payload,
+            data = proxy_call(
+                "salesorders",
+                "create",
+                method="POST",
+                payload=payload,
             )
+            # Zoho's response shape: {"salesorder": {...}, ...} or unwrapped depending on product config.
+            so_obj = data.get("salesorder") if isinstance(data, dict) else None
             so_number = str(
-                data.get("salesorder", {}).get("salesorder_number")
-                or data.get("salesorder_number")
-                or data.get("salesorder_id")
-                or "UNKNOWN",
+                (so_obj or {}).get("salesorder_number")
+                or (so_obj or {}).get("salesorder_id")
+                or (data.get("salesorder_number") if isinstance(data, dict) else None)
+                or (data.get("salesorder_id") if isinstance(data, dict) else None)
+                or "UNKNOWN"
             )
             log.status = ZohoSyncLog.Status.SUCCESS
             log.response_payload = data

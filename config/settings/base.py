@@ -154,13 +154,13 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE  # Beat schedules align with America/New_York
 
-# Zoho (secrets via env; never commit)
-ZOHO_CLIENT_ID = env("ZOHO_CLIENT_ID", default="")
-ZOHO_CLIENT_SECRET = env("ZOHO_CLIENT_SECRET", default="")
-ZOHO_REFRESH_TOKEN = env("ZOHO_REFRESH_TOKEN", default="")
-ZOHO_ORG_ID = env("ZOHO_ORG_ID", default="")
-ZOHO_API_BASE = env("ZOHO_API_BASE", default="https://www.zohoapis.com")
-ZOHO_BOOKS_ORG_ID = env("ZOHO_BOOKS_ORG_ID", default="")
+# Zoho — Nexus calls Zoho through the centralized zoho-integration-service
+# proxy (LXC 9503 at http://192.168.1.205:8000). The proxy holds the OAuth
+# credentials and resolves brand → org_id, so Nexus only needs the proxy URL,
+# brand, and the shared internal token.
+ZOHO_PROXY_URL = env("ZOHO_PROXY_URL", default="")
+ZOHO_PROXY_BRAND = env("ZOHO_PROXY_BRAND", default="haute_brands")
+ZOHO_PROXY_INTERNAL_TOKEN = env("ZOHO_PROXY_INTERNAL_TOKEN", default="")
 ZOHO_REPLACEMENT_SO_THRESHOLD = env.float("ZOHO_REPLACEMENT_SO_THRESHOLD", default=5000.0)
 
 # Claim / automation

@@ -1,9 +1,20 @@
-"""Zoho API client — OAuth refresh + Inventory / Books style endpoints."""
+"""Zoho proxy client.
+
+All Zoho API calls flow through the centralized zoho-integration-service
+(LXC 9503 at http://192.168.1.205:8000). The proxy handles OAuth refresh,
+brand → org_id resolution, audit logging, and rate limiting. Nexus only
+needs to know:
+
+  - the proxy URL,
+  - which brand it's calling on behalf of (haute_brands),
+  - the internal token shared between all internal apps and the proxy.
+
+That's it. No more per-app Zoho client_id / client_secret / refresh_token.
+"""
 
 from __future__ import annotations
 
 import logging
-import time
 from typing import Any, Dict, Optional
 
 import requests
@@ -13,78 +24,88 @@ logger = logging.getLogger(__name__)
 
 
 class ZohoAPIError(Exception):
+    """Raised when the proxy returns 4xx/5xx or is unreachable."""
+
     def __init__(self, message: str, status: Optional[int] = None, payload: Optional[Dict] = None):
         super().__init__(message)
         self.status = status
         self.payload = payload or {}
 
 
-class ZohoClient:
-    """Minimal client: token refresh + POST JSON. Extend per product (Inventory, Books, CRM)."""
+def is_configured() -> bool:
+    """True when the proxy URL + internal token + brand are all set."""
+    return bool(
+        getattr(settings, "ZOHO_PROXY_URL", "")
+        and getattr(settings, "ZOHO_PROXY_INTERNAL_TOKEN", "")
+        and getattr(settings, "ZOHO_PROXY_BRAND", "")
+    )
 
-    TOKEN_URL = "https://accounts.zoho.com/oauth/v2/token"
 
-    def __init__(self):
-        self._access_token: Optional[str] = None
-        self._access_expires_at: float = 0
+def proxy_call(
+    service: str,
+    action: str,
+    *,
+    method: str = "POST",
+    resource_id: Optional[str] = None,
+    payload: Optional[Dict[str, Any]] = None,
+    params: Optional[Dict[str, Any]] = None,
+    timeout: int = 60,
+) -> Dict[str, Any]:
+    """Call /zoho/{service}/{action}[/{resource_id}] on the proxy and return the JSON body.
 
-    def _refresh_access_token(self) -> str:
-        cid = settings.ZOHO_CLIENT_ID
-        secret = settings.ZOHO_CLIENT_SECRET
-        refresh = settings.ZOHO_REFRESH_TOKEN
-        if not all([cid, secret, refresh]):
-            raise ZohoAPIError("Zoho OAuth credentials not configured")
-        r = requests.post(
-            self.TOKEN_URL,
-            data={
-                "refresh_token": refresh,
-                "client_id": cid,
-                "client_secret": secret,
-                "grant_type": "refresh_token",
-            },
-            timeout=30,
+    Raises ZohoAPIError if the proxy / Zoho returns a non-2xx, or if the
+    proxy is not configured. Callers should catch ZohoAPIError to map onto
+    ZohoSyncLog status FAILED.
+    """
+    if not is_configured():
+        raise ZohoAPIError(
+            "Zoho proxy is not configured "
+            "(set ZOHO_PROXY_URL + ZOHO_PROXY_INTERNAL_TOKEN + ZOHO_PROXY_BRAND)"
         )
-        if r.status_code >= 400:
-            raise ZohoAPIError("Token refresh failed", status=r.status_code, payload=r.json() if r.content else {})
-        data = r.json()
-        token = data.get("access_token")
-        if not token:
-            raise ZohoAPIError("No access_token in refresh response", payload=data)
-        expires_in = int(data.get("expires_in_sec") or data.get("expires_in") or 3600)
-        self._access_token = token
-        self._access_expires_at = time.time() + expires_in - 60
-        return token
 
-    def access_token(self) -> str:
-        if self._access_token and time.time() < self._access_expires_at:
-            return self._access_token
-        return self._refresh_access_token()
+    url = f"{settings.ZOHO_PROXY_URL.rstrip('/')}/zoho/{service}/{action}"
+    if resource_id:
+        url = f"{url}/{resource_id}"
 
-    def request(
-        self,
-        method: str,
-        path: str,
-        *,
-        params: Optional[dict] = None,
-        json: Optional[dict] = None,
-    ) -> Dict[str, Any]:
-        base = settings.ZOHO_API_BASE.rstrip("/")
-        url = f"{base}{path}"
-        headers = {"Authorization": f"Zoho-oauthtoken {self.access_token()}"}
-        r = requests.request(method, url, headers=headers, params=params, json=json, timeout=60)
-        if r.status_code >= 400:
-            try:
-                payload = r.json()
-            except Exception:  # noqa: BLE001
-                payload = {"raw": r.text[:2000]}
-            raise ZohoAPIError(f"Zoho API error: {r.status_code}", status=r.status_code, payload=payload)
-        if not r.content:
-            return {}
+    headers = {
+        "X-Brand": settings.ZOHO_PROXY_BRAND,
+        "X-Internal-Token": settings.ZOHO_PROXY_INTERNAL_TOKEN,
+    }
+    if payload is not None:
+        headers["Content-Type"] = "application/json"
+
+    try:
+        r = requests.request(
+            method, url, headers=headers, json=payload, params=params, timeout=timeout
+        )
+    except requests.RequestException as exc:
+        raise ZohoAPIError(f"Zoho proxy unreachable: {exc}") from exc
+
+    if r.status_code >= 400:
+        try:
+            body = r.json()
+        except ValueError:
+            body = {"raw": r.text[:2000]}
+        raise ZohoAPIError(
+            f"Zoho proxy error: {r.status_code}",
+            status=r.status_code,
+            payload=body,
+        )
+
+    if not r.content:
+        return {}
+    try:
         return r.json()
+    except ValueError:
+        return {"raw": r.text}
 
 
 def create_inventory_sales_order_payload(claim) -> Dict[str, Any]:
-    """Build a Zoho Inventory–style sales order body (adapt fields to your org)."""
+    """Build a Zoho Inventory sales order body for a claim.
+
+    The proxy fills in organization_id from zoho_orgs based on X-Brand;
+    we only send the per-order fields.
+    """
     customer = claim.customer_account
     line = {
         "sku": claim.product.sku,
