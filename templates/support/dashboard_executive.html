@@ -1,49 +1,83 @@
 {% extends "support/app_shell.html" %}
-{% block title %}Executive dashboard — Nexus{% endblock %}
+{% block title %}Insights · Nexus Resolve{% endblock %}
+{% block header_title %}Insights{% endblock %}
+
 {% block main %}
 <div class="mx-auto max-w-7xl space-y-6">
-  <div>
-    <h1 class="text-2xl font-semibold tracking-tight">Executive & quality exposure</h1>
-    <p class="mt-1 text-sm text-zinc-500">Financial and operational risk in one pane.</p>
-  </div>
-  <div class="grid gap-4 md:grid-cols-3">
-    <div class="rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-soft dark:border-zinc-800 dark:bg-zinc-900">
-      <div class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Reimbursement exposure</div>
-      <div class="mt-2 text-3xl font-semibold">${{ reimbursement_exposure }}</div>
-    </div>
-    <div class="rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-soft dark:border-zinc-800 dark:bg-zinc-900">
-      <div class="text-xs font-semibold uppercase tracking-wide text-zinc-500">SLA breached</div>
-      <div class="mt-2 text-3xl font-semibold">{{ sla_breached }}</div>
-    </div>
-    <div class="rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-soft dark:border-zinc-800 dark:bg-zinc-900">
-      <div class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Pipeline</div>
-      <div class="mt-2 text-sm text-zinc-600 dark:text-zinc-300">
-        {% for row in ticket_counts %}<div>{{ row.status }}: {{ row.c }}</div>{% endfor %}
+  {% include "components/_page_header.html" with eyebrow="Executive" title="Quality & financial exposure" subtitle="Operational risk and reimbursement load in one pane." %}
+
+  <section class="grid gap-4 md:grid-cols-3">
+    <article class="nx-card p-5">
+      <div class="flex items-center gap-3">
+        <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">{% include "components/_icon.html" with name="dollar" class="h-5 w-5" %}</span>
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Reimbursement exposure</p>
+          <p class="mt-1 text-3xl font-bold tabular-nums text-zinc-900 dark:text-zinc-100">${{ reimbursement_exposure }}</p>
+        </div>
       </div>
-    </div>
-  </div>
-  <div class="grid gap-4 lg:grid-cols-2">
-    <div class="-mx-1 overflow-hidden rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-soft sm:mx-0 dark:border-zinc-800 dark:bg-zinc-900">
-      <h2 class="text-sm font-semibold">Claims by SKU</h2>
-      <div class="mt-3 overflow-x-auto overscroll-x-contain">
-      <table class="min-w-[320px] w-full text-sm">
-        {% for row in claims_by_sku %}
-        <tr class="border-t border-zinc-100 dark:border-zinc-800"><td class="py-2">{{ row.product__sku }}</td><td class="py-2 text-right">{{ row.c }}</td></tr>
-        {% empty %}<tr><td colspan="2" class="py-6 text-zinc-500">No data</td></tr>{% endfor %}
-      </table>
+    </article>
+    <article class="nx-card p-5">
+      <div class="flex items-center gap-3">
+        <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300">{% include "components/_icon.html" with name="clock" class="h-5 w-5" %}</span>
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">SLA breached</p>
+          <p class="mt-1 text-3xl font-bold tabular-nums text-zinc-900 dark:text-zinc-100">{{ sla_breached }}</p>
+        </div>
       </div>
-    </div>
-    <div class="rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-soft dark:border-zinc-800 dark:bg-zinc-900">
-      <h2 class="text-sm font-semibold">Hot batches / incidents</h2>
-      <ul class="mt-3 space-y-2 text-sm">
+    </article>
+    <article class="nx-card p-5">
+      <div class="flex items-start gap-3">
+        <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300">{% include "components/_icon.html" with name="trending-up" class="h-5 w-5" %}</span>
+        <div class="min-w-0 flex-1">
+          <p class="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Pipeline</p>
+          <ul class="mt-2 space-y-1 text-sm">
+            {% for row in ticket_counts %}
+            <li class="flex items-center justify-between"><span class="capitalize text-zinc-700 dark:text-zinc-300">{{ row.status }}</span><span class="font-semibold tabular-nums text-zinc-900 dark:text-zinc-100">{{ row.c }}</span></li>
+            {% empty %}<li class="text-zinc-500">No data</li>{% endfor %}
+          </ul>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section class="grid gap-4 lg:grid-cols-2">
+    <article class="nx-card overflow-hidden p-0">
+      <header class="flex items-center justify-between gap-3 border-b border-zinc-100 px-5 py-4 dark:border-zinc-800">
+        <h2 class="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Claims by SKU</h2>
+        <span class="text-xs text-zinc-500">Top contributors</span>
+      </header>
+      <div class="nx-scroll overflow-x-auto">
+        <table class="w-full text-sm">
+          <tbody>
+            {% for row in claims_by_sku %}
+            <tr class="border-t border-zinc-100 first:border-t-0 dark:border-zinc-800">
+              <td class="px-5 py-3 font-medium text-zinc-800 dark:text-zinc-200">{{ row.product__sku }}</td>
+              <td class="px-5 py-3 text-right tabular-nums text-zinc-700 dark:text-zinc-300">{{ row.c }}</td>
+            </tr>
+            {% empty %}
+            <tr><td class="px-5 py-10 text-center text-sm text-zinc-500">No data</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </article>
+
+    <article class="nx-card p-5">
+      <h2 class="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Hot batches & incidents</h2>
+      <ul class="mt-4 space-y-2">
         {% for inc in hot_batches %}
-        <li class="rounded-xl bg-rose-50 px-3 py-2 dark:bg-rose-950/40">
-          <a class="font-medium text-rose-700 hover:underline dark:text-rose-300" href="{% url 'investigation_workspace' inc.pk %}">{{ inc.public_id }}</a>
-          — {{ inc.batch.lot_number }}
+        <li class="flex items-start gap-3 rounded-xl border border-rose-200/70 bg-rose-50 p-3 dark:border-rose-900/40 dark:bg-rose-950/30">
+          <span class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-rose-100 text-rose-700 dark:bg-rose-950/70 dark:text-rose-300">{% include "components/_icon.html" with name="alert" class="h-4 w-4" %}</span>
+          <div class="min-w-0">
+            <a class="text-sm font-semibold text-rose-700 hover:underline dark:text-rose-300" href="{% url 'investigation_workspace' inc.pk %}">{{ inc.public_id }}</a>
+            <p class="text-xs text-rose-700/80 dark:text-rose-300/80">{{ inc.batch.lot_number }}</p>
+          </div>
         </li>
-        {% empty %}<li class="text-zinc-500">No open incidents.</li>{% endfor %}
+        {% empty %}
+        <li class="rounded-xl border border-dashed border-zinc-300 px-4 py-6 text-center text-sm text-zinc-500 dark:border-zinc-700">No open incidents.</li>
+        {% endfor %}
       </ul>
-    </div>
-  </div>
+    </article>
+  </section>
 </div>
 {% endblock %}

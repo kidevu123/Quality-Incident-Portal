@@ -1,0 +1,15 @@
+{% comment %}
+Form field wrapper. Pair with `class="nx-form"` on the parent <form> so unstyled
+Django widgets pick up the baseline rules in nexus.css.
+Usage:
+  {% include "components/_field.html" with field=form.subject %}
+  {% include "components/_field.html" with field=form.body span_full=True %}
+{% endcomment %}<div class="{% if span_full %}md:col-span-2 {% endif %}{% if classes %}{{ classes }} {% endif %}">
+  <label for="{{ field.id_for_label }}" class="block text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+    {{ field.label }}
+    {% if field.field.required %}<span class="ml-0.5 text-violet-600">*</span>{% endif %}
+  </label>
+  <div class="mt-1.5">{{ field }}</div>
+  {% if field.help_text %}<p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{{ field.help_text }}</p>{% endif %}
+  {% if field.errors %}<p class="mt-1 text-xs font-medium text-rose-600 dark:text-rose-400">{{ field.errors.0 }}</p>{% endif %}
+</div>

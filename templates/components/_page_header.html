@@ -1,0 +1,14 @@
+{% comment %}
+Page-level title block with optional eyebrow, subtitle, and actions slot.
+Usage:
+  {% include "components/_page_header.html" with title="Inbox" subtitle="Triage tickets" %}
+  with actions:
+    {% include "components/_page_header.html" with eyebrow="Ticket" title=ticket.public_id subtitle=ticket.subject actions_html=actions %}
+{% endcomment %}<div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+  <div class="min-w-0">
+    {% if eyebrow %}<div class="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">{{ eyebrow }}</div>{% endif %}
+    <h1 class="break-words text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl dark:text-zinc-100">{{ title }}</h1>
+    {% if subtitle %}<p class="mt-1.5 text-sm text-zinc-600 dark:text-zinc-400">{{ subtitle }}</p>{% endif %}
+  </div>
+  {% if actions_html %}<div class="flex flex-wrap items-center gap-2">{{ actions_html|safe }}</div>{% endif %}
+</div>

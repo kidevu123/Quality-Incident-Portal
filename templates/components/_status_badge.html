@@ -1,0 +1,35 @@
+{% comment %}
+Ticket status badge. Maps the status code to a consistent color variant.
+Usage: {% include "components/_status_badge.html" with status=ticket.status label=ticket.get_status_display %}
+
+Falls back to neutral if the status doesn't match a known mapping.
+Known mappings:
+  new        → sky
+  open       → violet
+  pending    → amber
+  resolved   → emerald
+  closed     → zinc
+  rejected   → rose
+  on_hold    → zinc
+{% endcomment %}{% spaceless %}
+<span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold
+{% if status == 'new' %}bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200
+{% elif status == 'open' %}bg-violet-100 text-violet-900 dark:bg-violet-950/50 dark:text-violet-200
+{% elif status == 'pending' %}bg-amber-100 text-amber-900 dark:bg-amber-950/40 dark:text-amber-200
+{% elif status == 'resolved' %}bg-emerald-100 text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200
+{% elif status == 'closed' %}bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200
+{% elif status == 'rejected' %}bg-rose-100 text-rose-900 dark:bg-rose-950/40 dark:text-rose-200
+{% else %}bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200
+{% endif %}">
+<span class="h-1.5 w-1.5 rounded-full
+{% if status == 'new' %}bg-sky-500
+{% elif status == 'open' %}bg-violet-500
+{% elif status == 'pending' %}bg-amber-500
+{% elif status == 'resolved' %}bg-emerald-500
+{% elif status == 'closed' %}bg-zinc-400
+{% elif status == 'rejected' %}bg-rose-500
+{% else %}bg-zinc-400
+{% endif %}"></span>
+{{ label }}
+</span>
+{% endspaceless %}

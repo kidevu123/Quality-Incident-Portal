@@ -2,7 +2,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.views import redirect_to_login
 from django.db.models import Count, Prefetch, Sum
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views import View
 from django.views.generic import DetailView, ListView, TemplateView
@@ -12,7 +12,7 @@ from apps.accounts.permissions import user_can_use_distributor_portal, user_has_
 from apps.claims.models import Claim, ClaimAttachment
 from apps.crm.models import CustomerAccount
 from apps.quality.models import Investigation, QualityIncident
-from apps.support.models import Ticket, TicketMessage, TicketStatus
+from apps.support.models import Notification, Ticket, TicketMessage, TicketStatus
 from apps.support.working_on import apply_staff_working_on_signals
 
 
@@ -224,3 +224,42 @@ class InvestigationWorkspaceView(LoginRequiredMixin, StaffUserMixin, DetailView)
         ctx["related_claims"] = Claim.objects.filter(batch=batch).select_related("ticket", "customer_account")
         ctx["investigations"] = Investigation.objects.filter(incident=self.object)
         return ctx
+
+
+class NotificationListView(LoginRequiredMixin, View):
+    template_name = "support/notifications.html"
+
+    def get(self, request):
+        notifications = (
+            Notification.objects.filter(recipient=request.user)
+            .select_related("ticket", "actor")
+            .order_by("-created_at")[:100]
+        )
+        base_template = "support/app_shell.html"
+        if user_can_use_distributor_portal(request.user) and not user_has_role(
+            request.user,
+            Role.AGENT,
+            Role.QUALITY,
+            Role.FINANCE,
+            Role.ADMIN,
+        ):
+            base_template = "portal/base_portal.html"
+        return render(
+            request,
+            self.template_name,
+            {
+                "notifications": notifications,
+                "notification_base_template": base_template,
+            },
+        )
+
+    def post(self, request):
+        action = request.POST.get("action")
+        if action == "mark_all_read":
+            Notification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
+            messages.success(request, "Notifications marked as read.")
+        elif action == "mark_one_read":
+            raw_id = request.POST.get("notification_id") or ""
+            if raw_id.isdigit():
+                Notification.objects.filter(pk=int(raw_id), recipient=request.user).update(is_read=True)
+        return redirect(reverse("notifications"))

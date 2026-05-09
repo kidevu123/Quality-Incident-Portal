@@ -1,26 +1,71 @@
 {% extends "portal/base_portal.html" %}
 {% load tz %}
+{% block title %}Your claims · Nexus Resolve{% endblock %}
+
 {% block main %}
-<h1 class="text-xl font-semibold sm:text-2xl">Your claims</h1>
-<div class="-mx-1 mt-6 overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-soft sm:mx-0 dark:border-zinc-800 dark:bg-zinc-900">
-  <div class="overflow-x-auto overscroll-x-contain">
-  <table class="min-w-[720px] w-full divide-y divide-zinc-100 text-sm dark:divide-zinc-800">
-    <thead class="bg-zinc-50 text-left text-xs font-semibold uppercase text-zinc-500 dark:bg-zinc-900/50"><tr><th class="px-4 py-3">Claim</th><th class="px-4 py-3">Ticket</th><th class="px-4 py-3">Status</th><th class="px-4 py-3">SKU</th><th class="px-4 py-3">Resolution</th><th class="px-4 py-3">Submitted</th></tr></thead>
-    <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
-      {% for c in claims %}
-      <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
-        <td class="px-4 py-3 font-medium">{{ c.public_id }}</td>
-        <td class="px-4 py-3"><a class="text-violet-600 hover:underline" href="{% url 'portal_ticket' c.ticket.public_id %}">{{ c.ticket.public_id }}</a></td>
-        <td class="px-4 py-3"><span class="inline-flex rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200">{{ c.ticket.get_status_display }}</span></td>
-        <td class="px-4 py-3">{{ c.product.sku }}</td>
-        <td class="px-4 py-3">{{ c.get_resolution_requested_display }}</td>
-        <td class="px-4 py-3 whitespace-nowrap text-xs text-zinc-500">{{ c.created_at|localtime|date:"M j, Y g:i A T" }}</td>
-      </tr>
-      {% empty %}
-      <tr><td colspan="6" class="px-4 py-10 text-center text-zinc-500">No claims yet.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+{% include "components/_page_header.html" with eyebrow="Activity" title="Your claims" subtitle="All claims you've submitted, with their current resolution status." %}
+
+{% if claims %}
+<div class="space-y-3 md:hidden">
+  {% for c in claims %}
+  <a href="{% url 'portal_ticket' c.ticket.public_id %}" class="nx-card group block p-4 transition hover:border-violet-300 dark:hover:border-violet-700">
+    <div class="flex items-start justify-between gap-3">
+      <div class="min-w-0">
+        <div class="text-sm font-semibold text-violet-700 dark:text-violet-300">{{ c.ticket.public_id }}</div>
+        <div class="mt-0.5 truncate text-xs text-zinc-500 dark:text-zinc-400">Claim {{ c.public_id }}</div>
+      </div>
+      {% include "components/_status_badge.html" with status=c.ticket.status label=c.ticket.get_status_display %}
+    </div>
+    <dl class="mt-3 grid grid-cols-2 gap-3 text-xs">
+      <div>
+        <dt class="font-semibold uppercase tracking-wide text-zinc-400">SKU</dt>
+        <dd class="mt-0.5 truncate text-zinc-700 dark:text-zinc-300">{{ c.product.sku }}</dd>
+      </div>
+      <div>
+        <dt class="font-semibold uppercase tracking-wide text-zinc-400">Resolution</dt>
+        <dd class="mt-0.5 truncate text-zinc-700 dark:text-zinc-300">{{ c.get_resolution_requested_display }}</dd>
+      </div>
+    </dl>
+    <div class="mt-3 flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
+      <span>Submitted {{ c.created_at|localtime|date:"M j, g:i A" }}</span>
+      <span class="inline-flex items-center gap-1 text-violet-600 dark:text-violet-400">
+        <span>Open</span>{% include "components/_icon.html" with name="chevron-right" class="h-3.5 w-3.5" %}
+      </span>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+
+<div class="nx-card hidden overflow-hidden p-0 md:block">
+  <div class="nx-scroll overflow-x-auto">
+    <table class="min-w-[760px] w-full text-sm">
+      <thead class="bg-zinc-50/80 text-left text-[11px] font-semibold uppercase tracking-wider text-zinc-500 dark:bg-zinc-900/50">
+        <tr>
+          <th class="px-5 py-3">Claim</th>
+          <th class="px-5 py-3">Ticket</th>
+          <th class="px-5 py-3">Status</th>
+          <th class="px-5 py-3">SKU</th>
+          <th class="px-5 py-3">Resolution</th>
+          <th class="px-5 py-3">Submitted</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
+        {% for c in claims %}
+        <tr class="transition hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40">
+          <td class="px-5 py-3 font-medium text-zinc-800 dark:text-zinc-200">{{ c.public_id }}</td>
+          <td class="px-5 py-3"><a class="font-semibold text-violet-600 hover:underline dark:text-violet-400" href="{% url 'portal_ticket' c.ticket.public_id %}">{{ c.ticket.public_id }}</a></td>
+          <td class="px-5 py-3">{% include "components/_status_badge.html" with status=c.ticket.status label=c.ticket.get_status_display %}</td>
+          <td class="px-5 py-3 text-zinc-700 dark:text-zinc-300">{{ c.product.sku }}</td>
+          <td class="px-5 py-3 text-zinc-700 dark:text-zinc-300">{{ c.get_resolution_requested_display }}</td>
+          <td class="px-5 py-3 whitespace-nowrap text-xs text-zinc-500 dark:text-zinc-400">{{ c.created_at|localtime|date:"M j, Y g:i A T" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
 </div>
+{% else %}
+{% url 'portal_claim_submit' as submit_url %}
+{% include "components/_empty.html" with icon="file" title="No claims yet" body="Submit your first claim and we'll route it to the right quality team." cta_label="Submit a claim" cta_icon="plus" cta_href=submit_url %}
+{% endif %}
 {% endblock %}

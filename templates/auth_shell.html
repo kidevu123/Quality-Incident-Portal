@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load static %}
+{% comment %}
+Centered single-card layout for unauthenticated / setup pages
+(login, 403, no_workspace_access). Pages should put their card content
+inside `{% block auth_card %}` and override `{% block auth_eyebrow %}`,
+`{% block auth_title %}`, and `{% block auth_subtitle %}` as needed.
+The site footer is hidden on this layout.
+{% endcomment %}
+
+{% block footer %}{% endblock %}
+
+{% block body %}
+<div class="nx-hero relative flex flex-1 items-center justify-center px-4 py-10" style="padding-bottom: max(2.5rem, env(safe-area-inset-bottom));">
+  <div class="w-full max-w-md">
+    <div class="mb-7 flex items-center justify-center gap-3">
+      <img src="{% static 'brand/nexus-logo.svg' %}" alt="Nexus Resolve" class="h-10 w-auto max-w-[180px] dark:rounded-lg dark:bg-white dark:px-2 dark:py-1">
+    </div>
+    <div class="rounded-3xl border border-zinc-200/80 bg-white/95 p-6 shadow-pop sm:p-8 dark:border-zinc-800 dark:bg-zinc-900/95 backdrop-blur">
+      {% block auth_eyebrow %}{% endblock %}
+      {% if block.super %}{% endif %}
+      <div class="mb-5">
+        <h1 class="text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-2xl">{% block auth_title %}{% endblock %}</h1>
+        <p class="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400">{% block auth_subtitle %}{% endblock %}</p>
+      </div>
+      {% block auth_card %}{% endblock %}
+    </div>
+    <p class="mt-6 text-center text-xs text-zinc-500 dark:text-zinc-500">
+      Quality resolution platform · <span class="text-zinc-400 dark:text-zinc-600">Haute Brands</span>
+    </p>
+  </div>
+</div>
+{% endblock %}

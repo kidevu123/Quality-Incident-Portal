@@ -1,29 +1,59 @@
 {% extends "support/app_shell.html" %}
-{% block title %}{{ account.name }} — Customer 360{% endblock %}
+{% block title %}{{ account.name }} · Customer 360{% endblock %}
+{% block header_title %}Customer 360{% endblock %}
+
 {% block main %}
 <div class="mx-auto max-w-7xl space-y-6">
-  <div>
-    <h1 class="text-2xl font-semibold tracking-tight">{{ account.name }}</h1>
-    <p class="mt-1 text-sm text-zinc-500">Claims rate {{ account.claim_rate_percent }}% · Abuse risk {{ account.abuse_risk_score }} · Volume ${{ account.sales_volume_ytd }}</p>
-    {% if account.notes %}<p class="mt-3 max-w-3xl rounded-2xl border border-zinc-200 bg-white p-4 text-sm dark:border-zinc-800 dark:bg-zinc-900">{{ account.notes }}</p>{% endif %}
-  </div>
-  <div class="grid gap-4 lg:grid-cols-2">
-    <div class="rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-soft dark:border-zinc-800 dark:bg-zinc-900">
-      <h2 class="text-sm font-semibold">Open tickets</h2>
-      <ul class="mt-3 divide-y divide-zinc-100 text-sm dark:divide-zinc-800">
+  <header class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div class="flex items-start gap-4">
+      {% include "components/_avatar.html" with name=account.name size="lg" %}
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Account</p>
+        <h1 class="text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl dark:text-zinc-100">{{ account.name }}</h1>
+        <div class="mt-2 flex flex-wrap items-center gap-2 text-xs">
+          {% include "components/_badge.html" with label=account.claim_rate_percent|stringformat:"s"|add:"% claim rate" variant="brand" %}
+          {% include "components/_badge.html" with label=account.abuse_risk_score|stringformat:"s"|add:" risk" variant="warning" %}
+          {% include "components/_badge.html" with label="$"|add:account.sales_volume_ytd|stringformat:"s"|add:" volume YTD" variant="success" %}
+        </div>
+      </div>
+    </div>
+  </header>
+
+  {% if account.notes %}
+  <section class="nx-card p-5">
+    <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Notes</h2>
+    <p class="mt-2 text-sm leading-relaxed text-zinc-800 dark:text-zinc-200">{{ account.notes }}</p>
+  </section>
+  {% endif %}
+
+  <section class="grid gap-4 lg:grid-cols-2">
+    <article class="nx-card p-5">
+      <h2 class="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Open tickets</h2>
+      <ul class="mt-4 divide-y divide-zinc-100 text-sm dark:divide-zinc-800">
         {% for t in open_tickets %}
-        <li class="py-2"><a class="text-violet-600 hover:underline dark:text-violet-400" href="{% url 'ticket_workspace' t.public_id %}">{{ t.public_id }}</a> — {{ t.subject|truncatechars:48 }}</li>
-        {% empty %}<li class="py-4 text-zinc-500">No open tickets.</li>{% endfor %}
+        <li class="flex items-center gap-3 py-3">
+          <span class="h-2 w-2 shrink-0 rounded-full bg-violet-500"></span>
+          <a class="min-w-0 flex-1 truncate font-medium text-violet-600 hover:underline dark:text-violet-400" href="{% url 'ticket_workspace' t.public_id %}">{{ t.public_id }} · <span class="font-normal text-zinc-700 dark:text-zinc-300">{{ t.subject|truncatechars:48 }}</span></a>
+        </li>
+        {% empty %}
+        <li class="py-6 text-center text-sm text-zinc-500">No open tickets.</li>
+        {% endfor %}
       </ul>
-    </div>
-    <div class="rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-soft dark:border-zinc-800 dark:bg-zinc-900">
-      <h2 class="text-sm font-semibold">Recent claims</h2>
-      <ul class="mt-3 divide-y divide-zinc-100 text-sm dark:divide-zinc-800">
+    </article>
+    <article class="nx-card p-5">
+      <h2 class="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Recent claims</h2>
+      <ul class="mt-4 divide-y divide-zinc-100 text-sm dark:divide-zinc-800">
         {% for c in claims %}
-        <li class="py-2"><span class="font-medium">{{ c.public_id }}</span> · {{ c.product.sku }} · ${{ c.estimated_exposure }}</li>
-        {% empty %}<li class="py-4 text-zinc-500">No claims.</li>{% endfor %}
+        <li class="flex flex-wrap items-center justify-between gap-2 py-3">
+          <span class="font-semibold text-zinc-800 dark:text-zinc-200">{{ c.public_id }}</span>
+          <span class="text-zinc-500">{{ c.product.sku }}</span>
+          <span class="font-mono text-xs tabular-nums text-zinc-700 dark:text-zinc-300">${{ c.estimated_exposure }}</span>
+        </li>
+        {% empty %}
+        <li class="py-6 text-center text-sm text-zinc-500">No claims.</li>
+        {% endfor %}
       </ul>
-    </div>
-  </div>
+    </article>
+  </section>
 </div>
 {% endblock %}

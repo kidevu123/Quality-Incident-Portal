@@ -111,6 +111,80 @@ class TicketMessage(models.Model):
         ordering = ["created_at"]
 
 
+class NotificationKind(models.TextChoices):
+    MESSAGE = "message", "Message"
+    STATUS = "status", "Status Change"
+    SYSTEM = "system", "System"
+
+
+class Notification(models.Model):
+    recipient = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="notifications",
+    )
+    ticket = models.ForeignKey(
+        Ticket,
+        on_delete=models.CASCADE,
+        related_name="notifications",
+        null=True,
+        blank=True,
+    )
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        related_name="notifications_sent",
+        null=True,
+        blank=True,
+    )
+    kind = models.CharField(
+        max_length=32,
+        choices=NotificationKind.choices,
+        default=NotificationKind.SYSTEM,
+        db_index=True,
+    )
+    title = models.CharField(max_length=160)
+    body = models.TextField(blank=True)
+    url = models.CharField(max_length=255, blank=True)
+    is_read = models.BooleanField(default=False, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["recipient", "is_read", "-created_at"]),
+            models.Index(fields=["ticket", "-created_at"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.recipient} — {self.title}"
+
+
+class PushSubscription(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="push_subscriptions",
+    )
+    endpoint = models.TextField(unique=True)
+    p256dh = models.TextField()
+    auth = models.TextField()
+    user_agent = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    last_used_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-updated_at"]
+        indexes = [
+            models.Index(fields=["user", "is_active"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.user} push subscription"
+
+
 class ResponseMacro(models.Model):
     name = models.CharField(max_length=128)
     slug = models.SlugField(unique=True)

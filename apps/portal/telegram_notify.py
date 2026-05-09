@@ -175,6 +175,36 @@ def collect_staff_working_on_claim_chat_ids() -> list[str]:
     return ids
 
 
+def collect_ticket_activity_chat_ids(actor=None) -> list[str]:
+    """Staff/team Telegram recipients for any ticket activity."""
+    ids: list[str] = []
+    seen: set[str] = set()
+
+    actor_cid = ""
+    if actor is not None and getattr(actor, "telegram_chat_id", None):
+        actor_cid = str(actor.telegram_chat_id).strip()
+
+    def add(raw: object) -> None:
+        s = str(raw).strip()
+        if not s or s in seen or (actor_cid and s == actor_cid):
+            return
+        seen.add(s)
+        ids.append(s)
+
+    for raw in merged_telegram_broadcast_chat_ids():
+        add(raw)
+
+    qs = User.objects.filter(
+        Q(is_superuser=True) | Q(role__in=_STAFF_WORKING_ON_NOTIFY_ROLES),
+        telegram_chat_id__isnull=False,
+        is_active=True,
+    ).values_list("telegram_chat_id", flat=True)
+    for cid in qs:
+        add(cid)
+
+    return ids
+
+
 def message_body_signals_working_on_claim(body: str) -> bool:
     """True if staff message should broadcast ‘working on this’ (👀 or 👁 in the text)."""
     if not (body and body.strip()):
@@ -243,6 +273,36 @@ def notify_telegram_staff_working_on_ticket(ticket: "Ticket", actor) -> None:
     for cid in chat_ids:
         if actor_cid and cid == actor_cid:
             continue
+        mid = send_telegram_plain_text(cid, text, parse_mode="HTML")
+        if mid is not None:
+            register_telegram_message_for_ticket_reply(str(cid), mid, ticket.public_id)
+
+
+def notify_telegram_ticket_activity(ticket: "Ticket", actor, *, title: str, body: str = "") -> None:
+    token = (getattr(settings, "TELEGRAM_BOT_TOKEN", None) or "").strip()
+    if not token:
+        return
+
+    chat_ids = collect_ticket_activity_chat_ids(actor=actor)
+    if not chat_ids:
+        return
+
+    actor_name = ""
+    if actor is not None:
+        actor_name = actor.get_username() if hasattr(actor, "get_username") else str(actor)
+
+    lines = [
+        f"<b>{_tg_h(title)}</b>",
+        "",
+        f"<code>{_tg_h(ticket.public_id)}</code>",
+    ]
+    if actor_name:
+        lines.append(f"By: {_tg_h(actor_name)}")
+    if body:
+        lines.extend(["", _tg_h(body[:700])])
+
+    text = "\n".join(lines)
+    for cid in chat_ids:
         mid = send_telegram_plain_text(cid, text, parse_mode="HTML")
         if mid is not None:
             register_telegram_message_for_ticket_reply(str(cid), mid, ticket.public_id)

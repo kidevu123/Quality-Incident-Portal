@@ -6,9 +6,15 @@ from django.conf.urls.static import static
 
 from apps.accounts.views import NexusLoginView, NoWorkspaceAccessView
 from apps.portal.telegram_pages import TelegramSettingsView, TelegramUnlinkView
+from apps.support import pwa_views
 
 urlpatterns = [
     path("health/", include("apps.core_health.urls")),
+    path("manifest.webmanifest", pwa_views.manifest, name="web_manifest"),
+    path("sw.js", pwa_views.service_worker, name="service_worker"),
+    path("push/config/", pwa_views.push_config, name="push_config"),
+    path("push/subscribe/", pwa_views.push_subscribe, name="push_subscribe"),
+    path("push/unsubscribe/", pwa_views.push_unsubscribe, name="push_unsubscribe"),
     path("admin/", admin.site.urls),
     path("accounts/login/", NexusLoginView.as_view(), name="login"),
     path(

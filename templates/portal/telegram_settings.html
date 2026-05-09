@@ -1,61 +1,93 @@
 {% extends "portal/base_portal.html" %}
-{% block title %}Telegram notifications · Nexus Resolve{% endblock %}
-{% block main %}
-<div class="mx-auto max-w-xl">
-  <h1 class="text-2xl font-semibold">Telegram claim alerts</h1>
-  <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">Link Telegram to get pinged when a distributor submits a claim. <strong>Support Agents</strong>, <strong>Quality Managers</strong>, <strong>Administrators</strong>, and <strong>superusers</strong> who link here are notified in a <strong>private chat</strong> with the bot. Your server can also broadcast the same alerts to a <strong>team supergroup</strong> so everyone sees one thread and can discuss the claim there (see below).</p>
+{% block title %}Telegram alerts · Nexus Resolve{% endblock %}
 
-  <div class="mt-5 rounded-2xl border border-sky-200/80 bg-sky-50/60 p-4 text-sm text-zinc-700 dark:border-sky-900/40 dark:bg-sky-950/30 dark:text-zinc-300">
-    <h2 class="text-xs font-semibold uppercase tracking-wide text-sky-900 dark:text-sky-200">Team group inbox (optional)</h2>
-    <p class="mt-2 leading-relaxed">Create a Telegram <strong>supergroup</strong>, add {% if telegram_bot_username %}<strong>@{{ telegram_bot_username }}</strong>{% else %}your bot (set <code class="rounded bg-white/80 px-1 dark:bg-zinc-900/80">TELEGRAM_BOT_USERNAME</code>){% endif %}, then add the group’s <strong>numeric chat ID</strong> below (Nexus <strong>Administrators</strong> and <strong>superusers</strong>) or in <code class="rounded bg-white/80 px-1 dark:bg-zinc-900/80">TELEGRAM_CHAT_IDS</code> on the server <code class="rounded bg-white/80 px-1 dark:bg-zinc-900/80">.env</code> if you manage deploys. Use comma or newline between IDs; supergroup IDs are usually negative (e.g. <code class="rounded bg-white/80 px-1 dark:bg-zinc-900/80">-1001234567890</code>). No restart needed for the portal field. New claim alerts and “👀 on it” pings are copied into that group, and your team can <strong>reply in the group</strong> to coordinate—Telegram keeps that conversation; Nexus only picks up 👀 / 👁 when someone <strong>replies to the bot’s alert</strong> or uses the ticket id (same as DMs).</p>
-    <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">For 👀 <strong>reactions</strong> on alerts in a group, Telegram usually requires the bot to be an <strong>administrator</strong> in that group. {% if telegram_broadcast_chat_count %}There are <strong>{{ telegram_broadcast_chat_count }}</strong> team broadcast chat(s) in total{% if telegram_env_chat_count or telegram_portal_team_inbox_count %} (<code class="rounded bg-zinc-200/80 px-1 dark:bg-zinc-800">.env</code>: {{ telegram_env_chat_count }}, portal: {{ telegram_portal_team_inbox_count }}){% endif %}.{% else %}No team broadcast chats are set in <code class="rounded bg-zinc-200/80 px-1 dark:bg-zinc-800">.env</code> or the portal yet—only linked staff DMs will receive those alerts.{% endif %}</p>
+{% block main %}
+<div class="mx-auto max-w-2xl">
+  {% include "components/_page_header.html" with eyebrow="Settings" title="Telegram alerts" subtitle="Get pinged when a distributor submits a claim. Support Agents, Quality Managers, Administrators, and superusers who link here are notified in a private chat with the bot." %}
+
+  <section class="nx-card mb-5 p-5 sm:p-6">
+    <header class="mb-3 flex items-center gap-3">
+      <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300">{% include "components/_icon.html" with name="users" class="h-4 w-4" %}</span>
+      <div>
+        <h2 class="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Team group inbox <span class="ml-1 rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">Optional</span></h2>
+        <p class="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">Broadcast claim alerts to a Telegram supergroup so your team can discuss in one thread.</p>
+      </div>
+    </header>
+    <div class="space-y-3 rounded-2xl bg-sky-50/60 p-4 text-sm leading-relaxed text-zinc-700 dark:bg-sky-950/30 dark:text-zinc-300">
+      <p>Create a Telegram <strong>supergroup</strong>, add {% if telegram_bot_username %}<strong>@{{ telegram_bot_username }}</strong>{% else %}your bot (set <code class="rounded bg-white/80 px-1.5 py-0.5 font-mono text-xs dark:bg-zinc-900/80">TELEGRAM_BOT_USERNAME</code>){% endif %}, then add the group's <strong>numeric chat ID</strong> below (Administrators and superusers only) or in <code class="rounded bg-white/80 px-1.5 py-0.5 font-mono text-xs dark:bg-zinc-900/80">TELEGRAM_CHAT_IDS</code> on the server <code class="rounded bg-white/80 px-1.5 py-0.5 font-mono text-xs dark:bg-zinc-900/80">.env</code>. Comma or newline between IDs; supergroup IDs are usually negative (e.g. <code class="rounded bg-white/80 px-1.5 py-0.5 font-mono text-xs dark:bg-zinc-900/80">-1001234567890</code>). No restart needed for the portal field. Replies in the group stay in Telegram; Nexus only picks up 👀 / 👁 when someone <strong>replies to the bot's alert</strong> or uses the ticket id.</p>
+      <p class="text-xs text-zinc-500 dark:text-zinc-400">For 👀 <strong>reactions</strong> on alerts in a group, Telegram usually requires the bot to be an <strong>administrator</strong> there. {% if telegram_broadcast_chat_count %}<strong>{{ telegram_broadcast_chat_count }}</strong> team broadcast chat(s) configured{% if telegram_env_chat_count or telegram_portal_team_inbox_count %} (<code class="rounded bg-white/80 px-1.5 py-0.5 font-mono dark:bg-zinc-900/80">.env</code>: {{ telegram_env_chat_count }}, portal: {{ telegram_portal_team_inbox_count }}){% endif %}.{% else %}No team broadcast chats configured yet — only linked staff DMs will receive alerts.{% endif %}</p>
+    </div>
+
     {% if can_edit_team_telegram_inbox %}
-    <form method="post" action="{% url 'account_telegram' %}" class="mt-4 space-y-2 border-t border-sky-200/80 pt-4 dark:border-sky-800/50">
+    <form method="post" action="{% url 'account_telegram' %}" class="nx-form mt-5 space-y-2 border-t border-zinc-100 pt-5 dark:border-zinc-800">
       {% csrf_token %}
       <input type="hidden" name="action" value="save_team_telegram_inbox">
-      <label for="team_telegram_chat_ids" class="block text-xs font-medium text-sky-950 dark:text-sky-100">Group chat IDs (saved in Nexus)</label>
-      <textarea id="team_telegram_chat_ids" name="team_telegram_chat_ids" rows="3" class="mt-1 w-full resize-y rounded-xl border border-sky-200/90 bg-white px-3 py-2.5 font-mono text-sm text-zinc-900 shadow-sm placeholder:text-zinc-400 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/25 dark:border-sky-800 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500" placeholder="-1001234567890">{{ team_telegram_chat_ids_field }}</textarea>
-      <p class="text-xs text-zinc-500 dark:text-zinc-400">Leave empty to clear portal-stored IDs (server <code class="rounded bg-zinc-200/80 px-1 dark:bg-zinc-800">TELEGRAM_CHAT_IDS</code> still apply).</p>
-      <button type="submit" class="rounded-xl bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-500">Save team inbox</button>
+      <label for="team_telegram_chat_ids" class="block text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Group chat IDs <span class="font-normal normal-case text-zinc-400">(saved in Nexus)</span></label>
+      <textarea id="team_telegram_chat_ids" name="team_telegram_chat_ids" rows="3" class="font-mono" placeholder="-1001234567890">{{ team_telegram_chat_ids_field }}</textarea>
+      <p class="text-xs text-zinc-500 dark:text-zinc-400">Leave empty to clear portal-stored IDs (server <code class="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-xs dark:bg-zinc-800">TELEGRAM_CHAT_IDS</code> still apply).</p>
+      <button type="submit" class="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-500">
+        {% include "components/_icon.html" with name="check" class="h-4 w-4" %}<span>Save team inbox</span>
+      </button>
     </form>
     {% else %}
-    <p class="mt-4 border-t border-sky-200/80 pt-4 text-xs text-zinc-600 dark:border-sky-800/50 dark:text-zinc-400">Only <strong>Administrators</strong> (or superusers) can edit the team group chat IDs here. Ask an admin to add your supergroup ID, or use server <code class="rounded bg-zinc-200/80 px-1 dark:bg-zinc-800">TELEGRAM_CHAT_IDS</code> if you handle deployments.</p>
+    <p class="mt-5 border-t border-zinc-100 pt-5 text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">Only <strong>Administrators</strong> (or superusers) can edit the team group chat IDs here. Ask an admin or use server <code class="rounded bg-zinc-100 px-1.5 py-0.5 font-mono dark:bg-zinc-800">TELEGRAM_CHAT_IDS</code> if you handle deployments.</p>
     {% endif %}
-  </div>
+  </section>
 
-  <div class="mt-6 rounded-2xl border border-violet-200/80 bg-violet-50/50 p-4 text-sm text-zinc-700 dark:border-violet-900/40 dark:bg-violet-950/25 dark:text-zinc-300">
-    <h2 class="text-xs font-semibold uppercase tracking-wide text-violet-800 dark:text-violet-200">Staff: “I’m on this claim” (Telegram + workspace)</h2>
-    <p class="mt-2 leading-relaxed"><strong>In the ticket workspace</strong>, put <strong>👁</strong> or <strong>👀</strong> in a reply or internal note to ping the team on Telegram, add the acceptance note, move <strong>New → Open</strong> when needed, and assign yourself if the ticket has no assignee.</p>
-    <p class="mt-2 leading-relaxed"><strong>In Telegram</strong>, react with 👀 / 👁 on a claim alert, or reply with those emojis (or include the ticket id). The bot webhook must include <code class="rounded bg-white/80 px-1 dark:bg-zinc-900/80">message_reaction</code> in <code class="rounded bg-white/80 px-1 dark:bg-zinc-900/80">allowed_updates</code> — run <code class="rounded bg-white/80 px-1 dark:bg-zinc-900/80">python manage.py telegram_set_webhook</code> on the server after deploy.</p>
-    <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Telegram “on it” pings and the auto internal note are rate-limited to about once per 10 minutes per person per ticket; status and assignee still update every time.</p>
-  </div>
+  <section class="nx-card mb-5 p-5 sm:p-6">
+    <header class="mb-3 flex items-center gap-3">
+      <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300">{% include "components/_icon.html" with name="eye" class="h-4 w-4" %}</span>
+      <div>
+        <h2 class="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Staff "I'm on this claim"</h2>
+        <p class="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">Quick acknowledgment from Telegram or the workspace.</p>
+      </div>
+    </header>
+    <div class="space-y-3 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
+      <p><strong>In the ticket workspace</strong>, drop <strong>👁</strong> or <strong>👀</strong> in a reply or internal note to ping the team on Telegram, add the acceptance note, move <strong>New → Open</strong> when needed, and assign yourself if the ticket has no assignee.</p>
+      <p><strong>In Telegram</strong>, react with 👀 / 👁 on a claim alert, or reply with those emojis (or include the ticket id). The bot webhook must include <code class="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-xs dark:bg-zinc-800">message_reaction</code> in <code class="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-xs dark:bg-zinc-800">allowed_updates</code> — run <code class="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-xs dark:bg-zinc-800">python manage.py telegram_set_webhook</code> after deploy.</p>
+      <p class="text-xs text-zinc-500 dark:text-zinc-400">Telegram pings and the auto internal note are rate-limited to about once per 10 minutes per person per ticket; status and assignee still update every time.</p>
+    </div>
+  </section>
 
   {% if not telegram_bot_configured %}
-  <div class="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-100">
-    Telegram is not configured yet: set <code class="rounded bg-amber-100/80 px-1 dark:bg-amber-900/60">TELEGRAM_BOT_TOKEN</code> and <code class="rounded bg-amber-100/80 px-1 dark:bg-amber-900/60">TELEGRAM_BOT_USERNAME</code> (see <code class="rounded bg-amber-100/80 px-1 dark:bg-amber-900/60">docs/TELEGRAM.md</code>), redeploy, then register the webhook.
+  <div class="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-100">
+    {% include "components/_icon.html" with name="alert" class="mt-0.5 h-4 w-4 shrink-0" %}
+    <div>
+      <p class="font-semibold">Telegram is not configured yet</p>
+      <p class="mt-1">Set <code class="rounded bg-amber-100 px-1.5 py-0.5 font-mono text-xs dark:bg-amber-900/60">TELEGRAM_BOT_TOKEN</code> and <code class="rounded bg-amber-100 px-1.5 py-0.5 font-mono text-xs dark:bg-amber-900/60">TELEGRAM_BOT_USERNAME</code> (see <code class="rounded bg-amber-100 px-1.5 py-0.5 font-mono text-xs dark:bg-amber-900/60">docs/TELEGRAM.md</code>), redeploy, then register the webhook.</p>
+    </div>
   </div>
   {% else %}
 
-  <div class="mt-6 rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-soft dark:border-zinc-800 dark:bg-zinc-900">
+  <section class="nx-card mb-5 p-5 sm:p-6">
     {% if telegram_linked %}
-    <p class="text-sm font-medium text-zinc-800 dark:text-zinc-200">Status: <span class="text-emerald-600 dark:text-emerald-400">linked</span></p>
-    <p class="mt-1 text-xs text-zinc-500">If your role is Support Agent, Quality Manager, Administrator, or you are a superuser, new portal claims will be sent to this chat (in addition to team broadcast chats from the server or the portal team inbox).</p>
-    <form method="post" action="{% url 'account_telegram_unlink' %}" class="mt-4">
+    <div class="flex items-start gap-3">
+      <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">{% include "components/_icon.html" with name="check" class="h-4 w-4" %}</span>
+      <div class="min-w-0 flex-1">
+        <p class="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Linked to Telegram</p>
+        <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">If your role is Support Agent, Quality Manager, Administrator, or superuser, new portal claims will be sent to this chat.</p>
+      </div>
+    </div>
+    <form method="post" action="{% url 'account_telegram_unlink' %}" class="mt-5">
       {% csrf_token %}
-      <button type="submit" class="rounded-xl border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800">Unlink Telegram</button>
+      <button type="submit" class="inline-flex min-h-[40px] items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800">
+        {% include "components/_icon.html" with name="x" class="h-4 w-4" %}<span>Unlink Telegram</span>
+      </button>
     </form>
     {% else %}
-    <p class="text-sm text-zinc-600 dark:text-zinc-400">Use the button to open your bot in Telegram and press <strong>Start</strong>. The link expires in about 15 minutes.</p>
-    <a href="{{ telegram_deep_link }}" target="_blank" rel="noopener noreferrer" class="mt-4 inline-flex rounded-2xl bg-sky-500 px-5 py-3 text-sm font-semibold text-white hover:bg-sky-400">Open Telegram and bind</a>
-    <p class="mt-3 text-xs text-zinc-500 break-all">Deep link: <a class="text-violet-600 hover:underline dark:text-violet-400" href="{{ telegram_deep_link }}">{{ telegram_deep_link }}</a></p>
+    <p class="text-sm text-zinc-600 dark:text-zinc-400">Tap the button to open your bot in Telegram and press <strong>Start</strong>. The link expires in about 15 minutes.</p>
+    <a href="{{ telegram_deep_link }}" target="_blank" rel="noopener noreferrer" class="mt-4 inline-flex min-h-[48px] items-center gap-2 rounded-2xl bg-sky-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-500">
+      {% include "components/_icon.html" with name="send" class="h-4 w-4" %}<span>Open Telegram & bind</span>
+    </a>
+    <p class="mt-3 break-all text-xs text-zinc-500 dark:text-zinc-400">Deep link: <a class="text-violet-600 hover:underline dark:text-violet-400" href="{{ telegram_deep_link }}">{{ telegram_deep_link }}</a></p>
     {% endif %}
-  </div>
+  </section>
 
-  <div class="mt-8 rounded-2xl border border-zinc-200/80 bg-zinc-50/80 p-4 text-xs text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400">
-    <p class="font-semibold text-zinc-800 dark:text-zinc-200">Webhook URL</p>
+  <section class="rounded-2xl border border-zinc-200/70 bg-zinc-50/80 p-4 text-xs text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-400">
+    <p class="font-semibold text-zinc-700 dark:text-zinc-300">Webhook URL</p>
     <p class="mt-1 break-all font-mono">{{ webhook_url }}</p>
-    <p class="mt-2">Required for binding to work. Register with Telegram as described in <code class="rounded bg-zinc-200/80 px-1 dark:bg-zinc-800">docs/TELEGRAM.md</code>.</p>
-  </div>
+    <p class="mt-2">Required for binding to work. Register with Telegram as described in <code class="rounded bg-white px-1.5 py-0.5 font-mono dark:bg-zinc-800">docs/TELEGRAM.md</code>.</p>
+  </section>
   {% endif %}
 </div>
 {% endblock %}

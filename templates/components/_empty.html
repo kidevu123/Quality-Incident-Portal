@@ -1,0 +1,14 @@
+{% comment %}
+Empty state block. For lists/tables with no rows.
+Usage: {% include "components/_empty.html" with title="No claims yet" body="Submit your first claim to start the resolution flow." cta_label="Submit a claim" cta_href=submit_url icon="file" %}
+{% endcomment %}<div class="flex flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-300 bg-white/60 px-6 py-12 text-center dark:border-zinc-700 dark:bg-zinc-900/40">
+  {% if icon %}<div class="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-100 text-violet-600 dark:bg-violet-950/50 dark:text-violet-300">
+    {% include "components/_icon.html" with name=icon class="h-6 w-6" %}
+  </div>{% endif %}
+  <h3 class="text-base font-semibold text-zinc-900 dark:text-zinc-100">{{ title|default:"Nothing here yet" }}</h3>
+  {% if body %}<p class="mt-1.5 max-w-sm text-sm text-zinc-500 dark:text-zinc-400">{{ body }}</p>{% endif %}
+  {% if cta_label and cta_href %}<a href="{{ cta_href }}" class="mt-5 inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-violet-500">
+    {% if cta_icon %}{% include "components/_icon.html" with name=cta_icon class="h-4 w-4" %}{% endif %}
+    {{ cta_label }}
+  </a>{% endif %}
+</div>

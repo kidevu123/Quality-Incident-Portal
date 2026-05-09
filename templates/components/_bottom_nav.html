@@ -1,0 +1,47 @@
+{% comment %}
+Mobile bottom navigation. Two variants: "portal" (distributor) or "support" (staff).
+Usage: {% include "components/_bottom_nav.html" with variant="portal" %}
+Hidden on lg+ screens.
+{% endcomment %}{% with url_name=request.resolver_match.url_name|default:"" %}
+<nav class="nx-no-print fixed inset-x-0 bottom-0 z-40 border-t border-zinc-200/80 bg-white/95 px-2 pb-[max(.5rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-8px_24px_-18px_rgba(15,23,42,.45)] backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/95 lg:hidden" aria-label="Primary">
+  <div class="mx-auto grid max-w-md grid-cols-4 gap-1 text-[11px] font-semibold">
+    {% if variant == "support" %}
+    <a href="{% url 'support_inbox' %}" class="nx-bnav-item flex min-h-[56px] flex-col items-center justify-center gap-1 rounded-xl text-zinc-500 transition hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800" {% if url_name == 'support_inbox' %}data-active="true"{% endif %}>
+      <span class="nx-bnav-icon">{% include "components/_icon.html" with name="inbox" class="h-5 w-5" %}</span>
+      <span>Inbox</span>
+    </a>
+    <a href="{% url 'notifications' %}" class="nx-bnav-item relative flex min-h-[56px] flex-col items-center justify-center gap-1 rounded-xl text-zinc-500 transition hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800" {% if url_name == 'notifications' %}data-active="true"{% endif %}>
+      <span class="nx-bnav-icon">{% include "components/_icon.html" with name="bell" class="h-5 w-5" %}</span>
+      <span>Alerts</span>
+      {% if unread_notification_count %}<span class="absolute right-3 top-1.5 inline-flex min-h-[18px] min-w-[18px] items-center justify-center rounded-full bg-violet-600 px-1 text-[10px] font-bold leading-none text-white ring-2 ring-white dark:ring-zinc-950">{{ unread_notification_count }}</span>{% endif %}
+    </a>
+    <a href="{% url 'executive_dashboard' %}" class="nx-bnav-item flex min-h-[56px] flex-col items-center justify-center gap-1 rounded-xl text-zinc-500 transition hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800" {% if url_name == 'executive_dashboard' %}data-active="true"{% endif %}>
+      <span class="nx-bnav-icon">{% include "components/_icon.html" with name="chart" class="h-5 w-5" %}</span>
+      <span>Insights</span>
+    </a>
+    <button type="button" data-enable-push data-push-hidden="true" class="nx-bnav-item flex min-h-[56px] flex-col items-center justify-center gap-1 rounded-xl text-zinc-500 transition hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800">
+      <span class="nx-bnav-icon">{% include "components/_icon.html" with name="bell-ring" class="h-5 w-5" %}</span>
+      <span>Push</span>
+    </button>
+    {% else %}
+    <a href="{% url 'portal_home' %}" class="nx-bnav-item flex min-h-[56px] flex-col items-center justify-center gap-1 rounded-xl text-zinc-500 transition hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800" {% if url_name == 'portal_home' %}data-active="true"{% endif %}>
+      <span class="nx-bnav-icon">{% include "components/_icon.html" with name="home" class="h-5 w-5" %}</span>
+      <span>Home</span>
+    </a>
+    <a href="{% url 'portal_claims' %}" class="nx-bnav-item flex min-h-[56px] flex-col items-center justify-center gap-1 rounded-xl text-zinc-500 transition hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800" {% if url_name == 'portal_claims' %}data-active="true"{% endif %}>
+      <span class="nx-bnav-icon">{% include "components/_icon.html" with name="file" class="h-5 w-5" %}</span>
+      <span>Claims</span>
+    </a>
+    <a href="{% url 'portal_claim_submit' %}" class="nx-bnav-item flex min-h-[56px] flex-col items-center justify-center gap-1 rounded-xl text-zinc-500 transition hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800" {% if url_name == 'portal_claim_submit' %}data-active="true"{% endif %}>
+      <span class="nx-bnav-icon">{% include "components/_icon.html" with name="plus" class="h-5 w-5" %}</span>
+      <span>New</span>
+    </a>
+    <a href="{% url 'notifications' %}" class="nx-bnav-item relative flex min-h-[56px] flex-col items-center justify-center gap-1 rounded-xl text-zinc-500 transition hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800" {% if url_name == 'notifications' %}data-active="true"{% endif %}>
+      <span class="nx-bnav-icon">{% include "components/_icon.html" with name="bell" class="h-5 w-5" %}</span>
+      <span>Alerts</span>
+      {% if unread_notification_count %}<span class="absolute right-3 top-1.5 inline-flex min-h-[18px] min-w-[18px] items-center justify-center rounded-full bg-violet-600 px-1 text-[10px] font-bold leading-none text-white ring-2 ring-white dark:ring-zinc-950">{{ unread_notification_count }}</span>{% endif %}
+    </a>
+    {% endif %}
+  </div>
+</nav>
+{% endwith %}

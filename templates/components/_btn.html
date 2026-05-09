@@ -1,0 +1,39 @@
+{% comment %}
+Reusable button component.
+Usage:
+  {% include "components/_btn.html" with label="Save" variant="primary" %}
+  {% include "components/_btn.html" with label="View" variant="secondary" href=item.get_absolute_url %}
+  {% include "components/_btn.html" with label="Delete" variant="danger" type="submit" size="sm" %}
+
+Optional:
+  variant: primary (default) | secondary | ghost | danger | success
+  size:    md (default) | sm | lg
+  href:    if provided, renders as <a>; otherwise <button>
+  type:    button (default) | submit
+  icon:    icon name to render before label
+  block:   "true" → full width
+  data_*:  pass any data-* attribute via context (data_enable_push, data_push_hidden, etc.)
+  classes: extra classes appended
+{% endcomment %}{% spaceless %}
+{% if size == "sm" %}{% with size_classes="min-h-[36px] px-3 py-1.5 text-xs" %}{% endwith %}
+{% elif size == "lg" %}{% with size_classes="min-h-[52px] px-6 py-3 text-base" %}{% endwith %}
+{% endif %}
+{% with size_classes=size|default:"md" %}{% endwith %}
+{% endspaceless %}
+{% spaceless %}
+{% if href %}<a href="{{ href }}"{% if target %} target="{{ target }}" rel="noopener noreferrer"{% endif %}{% else %}<button type="{{ type|default:'button' }}"{% if disabled %} disabled{% endif %}{% endif %}
+  {% if data_enable_push %}data-enable-push data-push-hidden="{{ data_push_hidden|default:'true' }}"{% endif %}
+  {% if id %}id="{{ id }}"{% endif %}
+  {% if onclick %}onclick="{{ onclick }}"{% endif %}
+  class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-zinc-950 disabled:cursor-not-allowed disabled:opacity-60{% if block %} w-full{% endif %}
+  {% if size == "sm" %} min-h-[36px] px-3 py-1.5 text-xs{% elif size == "lg" %} min-h-[52px] px-6 py-3 text-base{% else %} min-h-[44px] px-4 py-2 text-sm{% endif %}
+  {% if variant == "secondary" %} border border-zinc-200 bg-white text-zinc-800 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800
+  {% elif variant == "ghost" %} text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100
+  {% elif variant == "danger" %} bg-rose-600 text-white hover:bg-rose-500 shadow-sm
+  {% elif variant == "success" %} bg-emerald-600 text-white hover:bg-emerald-500 shadow-sm
+  {% elif variant == "neutral" %} bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 shadow-sm
+  {% else %} bg-violet-600 text-white hover:bg-violet-500 shadow-sm
+  {% endif %}
+  {% if classes %} {{ classes }}{% endif %}">
+{% if icon %}{% include "components/_icon.html" with name=icon class="h-4 w-4" %}{% endif %}{% if label %}<span>{{ label }}</span>{% endif %}{{ inner|safe }}{% if href %}</a>{% else %}</button>{% endif %}
+{% endspaceless %}

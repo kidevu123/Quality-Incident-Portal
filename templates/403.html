@@ -1,13 +1,17 @@
-{% extends "base.html" %}
-{% block body %}
-<div class="flex flex-1 flex-col items-center justify-center px-4 py-16">
-  <div class="max-w-md rounded-2xl border border-zinc-200/80 bg-white p-8 text-center shadow-soft dark:border-zinc-800 dark:bg-zinc-900">
-    <h1 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Access restricted</h1>
-    <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">You do not have permission to open this page. If you use the distributor portal, continue there.</p>
-    <div class="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">
-      <a href="{% url 'portal_home' %}" class="rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-500">Distributor portal</a>
-      <a href="{% url 'support_inbox' %}" class="rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-800 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800">Support inbox</a>
-    </div>
-  </div>
+{% extends "auth_shell.html" %}
+{% block title %}Access restricted · Nexus Resolve{% endblock %}
+{% block auth_title %}Access restricted{% endblock %}
+{% block auth_subtitle %}You don't have permission to open this page. If you came in through the distributor portal, head back there.{% endblock %}
+
+{% block auth_card %}
+<div class="flex flex-col gap-2 sm:flex-row sm:justify-stretch">
+  <a href="{% url 'portal_home' %}" class="inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-500">
+    {% include "components/_icon.html" with name="home" class="h-4 w-4" %}
+    Distributor portal
+  </a>
+  <a href="{% url 'support_inbox' %}" class="inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800">
+    {% include "components/_icon.html" with name="inbox" class="h-4 w-4" %}
+    Support inbox
+  </a>
 </div>
 {% endblock %}

@@ -75,6 +75,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "config.context_processors.nexus_release",
+                "config.context_processors.notifications",
             ],
         },
     },
@@ -176,6 +177,11 @@ TELEGRAM_CHAT_IDS = env.list("TELEGRAM_CHAT_IDS", default=[])
 TELEGRAM_WEBHOOK_SECRET = env("TELEGRAM_WEBHOOK_SECRET", default="")
 # Full HTTPS URL for manage.py telegram_set_webhook (e.g. https://your.domain/portal/telegram/webhook/)
 TELEGRAM_WEBHOOK_URL = env("TELEGRAM_WEBHOOK_URL", default="")
+
+# Browser Push (VAPID keys; private key is base64-encoded PEM in env).
+WEB_PUSH_VAPID_PUBLIC_KEY = env("WEB_PUSH_VAPID_PUBLIC_KEY", default="")
+WEB_PUSH_VAPID_PRIVATE_KEY_B64 = env("WEB_PUSH_VAPID_PRIVATE_KEY_B64", default="")
+WEB_PUSH_VAPID_SUBJECT = env("WEB_PUSH_VAPID_SUBJECT", default="mailto:admin@nexus-resolve.local")
 
 # Link tokens + webhook should use Redis in production (shared across Gunicorn workers)
 REDIS_CACHE_URL = env("REDIS_CACHE_URL", default="")

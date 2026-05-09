@@ -1,173 +1,218 @@
 {% extends "support/app_shell.html" %}
 {% load tz %}
-{% block title %}{{ ticket.public_id }} — Nexus{% endblock %}
+{% block title %}{{ ticket.public_id }} · Nexus Resolve{% endblock %}
+{% block header_title %}Workspace{% endblock %}
+
 {% block main %}
 <div class="mx-auto max-w-[1600px] min-w-0">
-  <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-    <div>
-      <div class="text-xs font-medium uppercase tracking-wide text-zinc-500">Ticket workspace</div>
-      <h1 class="text-xl font-semibold tracking-tight">{{ ticket.public_id }}</h1>
-      <p class="text-sm text-zinc-500">{{ ticket.subject }}</p>
+  <a href="{% url 'support_inbox' %}" class="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-500 transition hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100">
+    {% include "components/_icon.html" with name="chevron-right" class="h-3 w-3 -scale-x-100" %}
+    <span>Inbox</span>
+  </a>
+  <div class="mt-3 mb-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+    <div class="min-w-0">
+      <p class="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Ticket</p>
+      <h1 class="break-words text-xl font-semibold tracking-tight text-zinc-900 sm:text-2xl dark:text-zinc-100">{{ ticket.public_id }}</h1>
+      <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{{ ticket.subject }}</p>
     </div>
-    <div class="flex flex-wrap gap-2">
-      <a href="{% url 'customer_360' ticket.customer_account_id %}" class="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-medium shadow-sm hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800">Account 360</a>
+    <div class="flex flex-wrap items-center gap-2">
+      {% include "components/_status_badge.html" with status=ticket.status label=ticket.get_status_display %}
+      <a href="{% url 'customer_360' ticket.customer_account_id %}" class="inline-flex min-h-[40px] items-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-semibold text-zinc-700 shadow-sm transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800">
+        {% include "components/_icon.html" with name="users" class="h-4 w-4" %}<span>Account 360</span>
+      </a>
     </div>
   </div>
-  <div class="grid gap-4 lg:grid-cols-12">
-    <section class="order-2 space-y-3 lg:order-none lg:col-span-3">
-      <div class="rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-soft dark:border-zinc-800 dark:bg-zinc-900">
-        <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Queues & routing</h2>
-        <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-300">Macros, escalations, and filters plug in here via admin configuration.</p>
-      </div>
-      <div class="rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-soft dark:border-zinc-800 dark:bg-zinc-900">
-        <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Status</h2>
-        <form method="post" class="mt-3 space-y-2">
+
+  <div class="grid gap-5 lg:grid-cols-12">
+    {# LEFT: routing & status #}
+    <section class="order-2 space-y-4 lg:order-none lg:col-span-3">
+      <article class="nx-card p-5">
+        <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Queues & routing</h2>
+        <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">Macros, escalations, and filters plug in here via admin configuration.</p>
+      </article>
+      <article class="nx-card p-5">
+        <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Status</h2>
+        <form method="post" class="nx-form mt-3 space-y-3">
           {% csrf_token %}
-          <select name="status" class="w-full min-h-[44px] rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 shadow-sm focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100">
+          <select name="status">
             {% for val,label in ticket_statuses %}
             <option value="{{ val }}" {% if ticket.status == val %}selected{% endif %}>{{ label }}</option>
             {% endfor %}
           </select>
-          <button class="w-full rounded-xl bg-zinc-900 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-900">Update status</button>
+          <button type="submit" class="inline-flex min-h-[40px] w-full items-center justify-center gap-2 rounded-xl bg-zinc-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100">
+            {% include "components/_icon.html" with name="refresh" class="h-4 w-4" %}<span>Update status</span>
+          </button>
         </form>
-      </div>
+      </article>
     </section>
-    <section class="order-1 space-y-4 lg:order-none lg:col-span-6">
+
+    {# CENTER: distributor submission + conversation #}
+    <section class="order-1 space-y-5 lg:order-none lg:col-span-6">
       {% with c=ticket.claim %}
       {% if c %}
-      <div class="rounded-2xl border border-violet-200/80 bg-violet-50/40 p-3 shadow-soft sm:p-4 dark:border-violet-900/40 dark:bg-violet-950/20">
-        <h2 class="text-sm font-semibold text-violet-900 dark:text-violet-100">Distributor submission</h2>
-        <p class="mt-1 text-xs text-violet-800/80 dark:text-violet-300/90">Everything the customer entered on the portal — use this to investigate and resolve.</p>
-        <dl class="mt-4 grid gap-3 text-sm sm:grid-cols-2">
-          <div><dt class="text-xs font-medium uppercase text-zinc-500">Defect type</dt><dd class="mt-0.5 font-medium text-zinc-900 dark:text-zinc-100">{{ c.get_defect_type_display }}</dd></div>
-          <div><dt class="text-xs font-medium uppercase text-zinc-500">Severity</dt><dd class="mt-0.5 font-medium text-zinc-900 dark:text-zinc-100">{{ c.get_severity_display }}</dd></div>
-          <div><dt class="text-xs font-medium uppercase text-zinc-500">Resolution requested</dt><dd class="mt-0.5 font-medium text-zinc-900 dark:text-zinc-100">{{ c.get_resolution_requested_display }}</dd></div>
-          <div><dt class="text-xs font-medium uppercase text-zinc-500">Qty sold / affected</dt><dd class="mt-0.5 font-medium text-zinc-900 dark:text-zinc-100">{{ c.quantity_sold }} / {{ c.quantity_affected }}</dd></div>
-          <div><dt class="text-xs font-medium uppercase text-zinc-500">Est. financial impact</dt><dd class="mt-0.5 font-medium text-zinc-900 dark:text-zinc-100">${{ c.estimated_exposure }} <span class="text-xs font-normal text-zinc-500">(from distributor or catalog × qty)</span></dd></div>
-          <div><dt class="text-xs font-medium uppercase text-zinc-500">Date sold</dt><dd class="mt-0.5 text-zinc-900 dark:text-zinc-100">{% if c.date_sold %}{{ c.date_sold|date:"M j, Y" }}{% else %}—{% endif %}</dd></div>
-          <div><dt class="text-xs font-medium uppercase text-zinc-500">PO / Invoice</dt><dd class="mt-0.5 break-all text-zinc-900 dark:text-zinc-100">{% if c.po_number %}{{ c.po_number }}{% else %}—{% endif %} / {% if c.invoice_number %}{{ c.invoice_number }}{% else %}—{% endif %}</dd></div>
+      <article class="rounded-2xl border border-violet-200/70 bg-violet-50/50 p-5 shadow-soft dark:border-violet-900/40 dark:bg-violet-950/20">
+        <header class="mb-4 flex items-center gap-3">
+          <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-600 text-white">{% include "components/_icon.html" with name="file" class="h-4 w-4" %}</span>
+          <div>
+            <h2 class="text-sm font-semibold text-violet-900 dark:text-violet-100">Distributor submission</h2>
+            <p class="text-xs text-violet-800/80 dark:text-violet-300/90">Everything the customer entered on the portal.</p>
+          </div>
+        </header>
+        <dl class="grid gap-4 text-sm sm:grid-cols-2">
+          <div><dt class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Defect type</dt><dd class="mt-0.5 font-medium text-zinc-900 dark:text-zinc-100">{{ c.get_defect_type_display }}</dd></div>
+          <div><dt class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Severity</dt><dd class="mt-0.5 font-medium text-zinc-900 dark:text-zinc-100">{{ c.get_severity_display }}</dd></div>
+          <div><dt class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Resolution requested</dt><dd class="mt-0.5 font-medium text-zinc-900 dark:text-zinc-100">{{ c.get_resolution_requested_display }}</dd></div>
+          <div><dt class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Qty sold / affected</dt><dd class="mt-0.5 font-medium text-zinc-900 dark:text-zinc-100">{{ c.quantity_sold }} / {{ c.quantity_affected }}</dd></div>
+          <div><dt class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Est. financial impact</dt><dd class="mt-0.5 font-medium tabular-nums text-zinc-900 dark:text-zinc-100">${{ c.estimated_exposure }} <span class="text-xs font-normal text-zinc-500">(distributor or catalog × qty)</span></dd></div>
+          <div><dt class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Date sold</dt><dd class="mt-0.5 text-zinc-900 dark:text-zinc-100">{% if c.date_sold %}{{ c.date_sold|date:"M j, Y" }}{% else %}—{% endif %}</dd></div>
+          <div class="sm:col-span-2"><dt class="text-xs font-semibold uppercase tracking-wide text-zinc-500">PO / Invoice</dt><dd class="mt-0.5 break-all text-zinc-900 dark:text-zinc-100">{{ c.po_number|default:"—" }} <span class="text-zinc-300 dark:text-zinc-700">/</span> {{ c.invoice_number|default:"—" }}</dd></div>
         </dl>
+
         {% if c.end_customer %}
-        <div class="mt-4 rounded-xl bg-white/80 p-3 text-sm dark:bg-zinc-900/50">
-          <div class="text-xs font-semibold uppercase text-zinc-500">Retailer / end customer</div>
-          <div class="mt-1 font-medium">{{ c.end_customer.retailer_name }}</div>
+        <div class="mt-5 rounded-xl border border-violet-200/70 bg-white/80 p-3 text-sm dark:border-violet-900/40 dark:bg-zinc-900/50">
+          <div class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Retailer / end customer</div>
+          <div class="mt-1 font-semibold text-zinc-900 dark:text-zinc-100">{{ c.end_customer.retailer_name }}</div>
           {% if c.end_customer.contact_name or c.end_customer.email or c.end_customer.phone %}
           <div class="mt-1 text-xs text-zinc-600 dark:text-zinc-400">{{ c.end_customer.contact_name }}{% if c.end_customer.email %} · {{ c.end_customer.email }}{% endif %}{% if c.end_customer.phone %} · {{ c.end_customer.phone }}{% endif %}</div>
           {% endif %}
         </div>
         {% endif %}
+
         {% if c.damage_description %}
-        <div class="mt-4">
-          <div class="text-xs font-semibold uppercase text-zinc-500">Damage / issue description</div>
-          <div class="mt-1 whitespace-pre-wrap rounded-xl bg-white/80 p-3 text-sm text-zinc-900 dark:bg-zinc-100 dark:bg-zinc-900/80">{{ c.damage_description }}</div>
+        <div class="mt-5">
+          <div class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Damage / issue description</div>
+          <div class="mt-1.5 whitespace-pre-wrap rounded-xl border border-violet-200/70 bg-white/80 p-3 text-sm leading-relaxed text-zinc-800 dark:border-violet-900/40 dark:bg-zinc-900/60 dark:text-zinc-200">{{ c.damage_description }}</div>
         </div>
         {% endif %}
         {% if c.suspected_root_cause_customer %}
-        <div class="mt-3">
-          <div class="text-xs font-semibold uppercase text-zinc-500">Suspected root cause (customer)</div>
-          <div class="mt-1 whitespace-pre-wrap rounded-xl bg-white/80 p-3 text-sm text-zinc-900 dark:bg-zinc-100 dark:bg-zinc-900/80">{{ c.suspected_root_cause_customer }}</div>
+        <div class="mt-4">
+          <div class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Suspected root cause (customer)</div>
+          <div class="mt-1.5 whitespace-pre-wrap rounded-xl border border-violet-200/70 bg-white/80 p-3 text-sm leading-relaxed text-zinc-800 dark:border-violet-900/40 dark:bg-zinc-900/60 dark:text-zinc-200">{{ c.suspected_root_cause_customer }}</div>
         </div>
         {% endif %}
-        <div class="mt-4 border-t border-violet-200/60 pt-4 dark:border-violet-800/50">
-          <div class="text-xs font-semibold uppercase text-zinc-500">Photos &amp; attachments</div>
+
+        <div class="mt-5 border-t border-violet-200/60 pt-4 dark:border-violet-800/50">
+          <div class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Photos & attachments</div>
           {% if c.attachments.all %}
-          <div class="mt-2 flex flex-wrap gap-3">
+          <div class="mt-3 flex flex-wrap gap-3">
             {% for a in c.attachments.all %}
-            {% if a.kind == 'image' %}
-            <a href="{{ a.file.url }}" target="_blank" rel="noopener noreferrer" class="group block w-full max-w-full shrink-0 sm:w-auto">
-              <img src="{{ a.file.url }}" alt="Claim attachment {{ forloop.counter }}" class="mx-auto max-h-64 w-full max-w-full rounded-xl object-contain shadow-sm ring-1 ring-zinc-200 transition group-hover:ring-violet-400 sm:max-h-48 sm:w-auto sm:max-w-[240px] dark:ring-zinc-700" loading="lazy" decoding="async">
-              <span class="mt-1 block text-center text-[10px] text-zinc-500">Open full size</span>
-            </a>
-            {% elif a.kind == 'video' %}
-            <div class="max-w-full">
-              <video controls class="max-h-52 max-w-full rounded-xl ring-1 ring-zinc-200 dark:ring-zinc-700" preload="metadata">
-                <source src="{{ a.file.url }}" />
-              </video>
-            </div>
-            {% else %}
-            <a href="{{ a.file.url }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-zinc-800 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800">
-              <span>{{ a.get_kind_display }}</span>
-              <span class="text-violet-600 dark:text-violet-400">Download</span>
-            </a>
-            {% endif %}
+              {% if a.kind == 'image' %}
+              <a href="{{ a.file.url }}" target="_blank" rel="noopener noreferrer" class="group block w-full max-w-full shrink-0 sm:w-auto">
+                <img src="{{ a.file.url }}" alt="Claim attachment {{ forloop.counter }}" class="mx-auto max-h-64 w-full max-w-full rounded-xl object-contain shadow-sm ring-1 ring-zinc-200 transition group-hover:ring-violet-400 sm:max-h-48 sm:w-auto sm:max-w-[240px] dark:ring-zinc-700" loading="lazy" decoding="async">
+                <span class="mt-1 block text-center text-[10px] text-zinc-500">Open full size</span>
+              </a>
+              {% elif a.kind == 'video' %}
+              <div class="max-w-full">
+                <video controls class="max-h-52 max-w-full rounded-xl ring-1 ring-zinc-200 dark:ring-zinc-700" preload="metadata">
+                  <source src="{{ a.file.url }}">
+                </video>
+              </div>
+              {% else %}
+              <a href="{{ a.file.url }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-semibold text-zinc-800 transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800">
+                {% include "components/_icon.html" with name="paperclip" class="h-3.5 w-3.5" %}
+                <span>{{ a.get_kind_display }}</span>
+                <span class="text-violet-600 dark:text-violet-400">Download</span>
+              </a>
+              {% endif %}
             {% endfor %}
           </div>
           {% else %}
           <p class="mt-2 text-xs text-zinc-500">No files were uploaded for this claim.</p>
           {% endif %}
         </div>
-      </div>
+      </article>
       {% endif %}
       {% endwith %}
-      <div class="rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-soft dark:border-zinc-800 dark:bg-zinc-900">
-        <h2 class="text-sm font-semibold">Conversation</h2>
-        <div class="mt-4 max-h-[480px] space-y-3 overflow-y-auto pr-1">
+
+      <article class="nx-card p-5">
+        <header class="mb-3 flex items-center justify-between gap-3">
+          <h2 class="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Conversation</h2>
+          <span class="text-xs text-zinc-500">{{ ticket.messages.all|length }} message{{ ticket.messages.all|length|pluralize }}</span>
+        </header>
+        <div class="nx-scroll max-h-[480px] space-y-3 overflow-y-auto pr-1">
           {% for m in ticket.messages.all %}
-          <div class="rounded-2xl border px-3 py-3 text-sm leading-relaxed {% if m.is_internal %}border-amber-200 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-950/30{% else %}border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950/50{% endif %}">
-            <div class="flex flex-col gap-2 text-xs text-zinc-500 sm:flex-row sm:items-start sm:justify-between">
-              <div class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                <span class="break-all font-medium text-zinc-600 dark:text-zinc-400">{% if m.author %}{{ m.author.username }}{% else %}System{% endif %}</span>
-                {% if m.is_internal %}
-                  {% if request.user.is_superuser or request.user.role == 'admin' %}
+          <article class="nx-fade-in rounded-2xl border px-4 py-3 text-sm leading-relaxed
+            {% if m.is_internal %}border-amber-200 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-950/30{% else %}border-zinc-200 bg-zinc-50/80 dark:border-zinc-700 dark:bg-zinc-950/40{% endif %}">
+            <header class="flex flex-col gap-2 text-xs text-zinc-500 sm:flex-row sm:items-center sm:justify-between">
+              <div class="flex min-w-0 flex-wrap items-center gap-2">
+                {% if m.is_internal %}{% include "components/_badge.html" with label="Internal" variant="warning" %}{% endif %}
+                <span class="break-all font-semibold text-zinc-700 dark:text-zinc-300">{% if m.author %}{{ m.author.username }}{% else %}System{% endif %}</span>
+                {% if m.is_internal and request.user.is_superuser or m.is_internal and request.user.role == 'admin' %}
                 <form method="post" class="inline" onsubmit="return confirm('Delete this internal note? For a mistaken simulated Zoho replacement (SIM-SO-…), the SO field and block on re-click are cleared and the ticket reopens if it was resolved via replacement.');">
                   {% csrf_token %}
                   <input type="hidden" name="action" value="delete_message">
                   <input type="hidden" name="message_id" value="{{ m.id }}">
-                  <button type="submit" class="rounded-lg px-2 py-0.5 text-[11px] font-medium text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40">Delete</button>
+                  <button type="submit" class="rounded-md px-2 py-0.5 text-[11px] font-semibold text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40">Delete</button>
                 </form>
-                  {% endif %}
                 {% endif %}
               </div>
-              <span class="shrink-0 whitespace-nowrap">{{ m.created_at|localtime|date:"M j, Y g:i A T" }}</span>
-            </div>
+              <time class="shrink-0 whitespace-nowrap">{{ m.created_at|localtime|date:"M j, g:i A" }}</time>
+            </header>
             <div class="mt-2 whitespace-pre-wrap text-zinc-900 dark:text-zinc-100">{{ m.body }}</div>
-          </div>
+          </article>
           {% empty %}
-          <p class="text-sm text-zinc-500">No messages yet.</p>
+          <p class="rounded-xl border border-dashed border-zinc-300 px-4 py-6 text-center text-sm text-zinc-500 dark:border-zinc-700">No messages yet.</p>
           {% endfor %}
         </div>
-        <form method="post" class="mt-4 space-y-3 border-t border-zinc-100 pt-4 dark:border-zinc-800">
+        <form method="post" class="nx-form mt-5 space-y-3 border-t border-zinc-100 pt-5 dark:border-zinc-800">
           {% csrf_token %}
-          <textarea name="body" rows="4" class="w-full min-h-[8rem] resize-y rounded-2xl border border-zinc-200 bg-white px-3 py-3 text-sm leading-relaxed text-zinc-900 shadow-sm placeholder:text-zinc-400 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/25 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500" placeholder="Reply to customer…"></textarea>
-          <label class="flex items-center gap-2 text-xs text-zinc-500"><input type="checkbox" name="internal" value="1"> Internal note</label>
-          <button class="min-h-[44px] rounded-xl bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500">Send</button>
+          <textarea name="body" rows="4" placeholder="Reply to customer…"></textarea>
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <label class="inline-flex items-center gap-2 text-xs font-semibold text-zinc-600 dark:text-zinc-400">
+              <input type="checkbox" name="internal" value="1">
+              <span>Internal note</span>
+            </label>
+            <button type="submit" class="inline-flex min-h-[40px] items-center gap-2 rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-500">
+              {% include "components/_icon.html" with name="send" class="h-4 w-4" %}<span>Send</span>
+            </button>
+          </div>
         </form>
-      </div>
+      </article>
     </section>
-    <section class="order-3 space-y-3 lg:order-none lg:col-span-3">
+
+    {# RIGHT: claim summary + Zoho #}
+    <section class="order-3 space-y-4 lg:order-none lg:col-span-3">
       {% with c=ticket.claim %}
       {% if c %}
-      <div class="rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-soft dark:border-zinc-800 dark:bg-zinc-900">
-        <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Claim summary</h2>
+      <article class="nx-card p-5">
+        <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Claim summary</h2>
         <dl class="mt-3 space-y-2 text-sm">
-          <div class="flex justify-between gap-2"><dt class="text-zinc-500">Claim ID</dt><dd class="font-medium">{{ c.public_id }}</dd></div>
-          <div class="flex justify-between gap-2"><dt class="text-zinc-500">SKU</dt><dd>{{ c.product.sku }}</dd></div>
-          <div class="flex justify-between gap-2"><dt class="text-zinc-500">Batch</dt><dd>{% if c.batch %}{{ c.batch.lot_number }}{% else %}—{% endif %}</dd></div>
-          <div class="flex justify-between gap-2"><dt class="text-zinc-500">Exposure</dt><dd>${{ c.estimated_exposure }}</dd></div>
-          <div class="flex justify-between gap-2"><dt class="text-zinc-500">Zoho SO</dt><dd class="truncate">{{ c.zoho_replacement_so_number|default:"—" }}</dd></div>
+          <div class="flex justify-between gap-2"><dt class="text-zinc-500">Claim ID</dt><dd class="font-medium text-zinc-900 dark:text-zinc-100">{{ c.public_id }}</dd></div>
+          <div class="flex justify-between gap-2"><dt class="text-zinc-500">SKU</dt><dd class="text-zinc-700 dark:text-zinc-300">{{ c.product.sku }}</dd></div>
+          <div class="flex justify-between gap-2"><dt class="text-zinc-500">Batch</dt><dd class="text-zinc-700 dark:text-zinc-300">{% if c.batch %}{{ c.batch.lot_number }}{% else %}—{% endif %}</dd></div>
+          <div class="flex justify-between gap-2"><dt class="text-zinc-500">Exposure</dt><dd class="font-mono tabular-nums text-zinc-900 dark:text-zinc-100">${{ c.estimated_exposure }}</dd></div>
+          <div class="flex justify-between gap-2"><dt class="text-zinc-500">Zoho SO</dt><dd class="truncate font-mono text-xs text-zinc-700 dark:text-zinc-300">{{ c.zoho_replacement_so_number|default:"—" }}</dd></div>
         </dl>
-        <p class="mt-3 text-xs text-zinc-500">Full distributor narrative and files are in <strong>Distributor submission</strong> (center column).</p>
+        <p class="mt-3 text-xs text-zinc-500">Full distributor narrative is in the center column.</p>
         <form method="post" class="mt-4">
           {% csrf_token %}
           <input type="hidden" name="action" value="zoho_replacement">
-          <button type="submit" class="w-full rounded-xl bg-emerald-600 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500">Create replacement sales order</button>
+          <button type="submit" class="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-500">
+            {% include "components/_icon.html" with name="package" class="h-4 w-4" %}<span>Create replacement SO</span>
+          </button>
         </form>
         <p class="mt-2 text-xs text-zinc-500">Approval gates apply above configured threshold. Duplicates blocked by idempotency fingerprint.</p>
-      </div>
+      </article>
       {% endif %}
       {% endwith %}
-      <div class="rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-soft dark:border-zinc-800 dark:bg-zinc-900">
-        <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Zoho sync</h2>
-        <ul class="mt-2 max-h-40 space-y-2 overflow-y-auto text-xs text-zinc-600 dark:text-zinc-300">
+      <article class="nx-card p-5">
+        <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Zoho sync</h2>
+        <ul class="nx-scroll mt-3 max-h-44 space-y-2 overflow-y-auto text-xs">
           {% if ticket.claim %}
           {% for z in ticket.claim.zoho_logs.all|slice:":8" %}
-          <li class="rounded-lg bg-zinc-50 px-2 py-1 dark:bg-zinc-950/50">{{ z.action }} — {{ z.status }} — {{ z.created_at|localtime|date:"M j, Y g:i A T" }}</li>
+          <li class="rounded-lg bg-zinc-50 px-2.5 py-1.5 text-zinc-600 dark:bg-zinc-950/60 dark:text-zinc-300">
+            <span class="font-semibold text-zinc-700 dark:text-zinc-200">{{ z.action }}</span>
+            <span class="text-zinc-300 dark:text-zinc-700">·</span>
+            <span>{{ z.status }}</span>
+            <span class="text-zinc-300 dark:text-zinc-700">·</span>
+            <span class="text-zinc-500">{{ z.created_at|localtime|date:"M j, g:i A" }}</span>
+          </li>
           {% empty %}
-          <li>No sync events.</li>
+          <li class="text-zinc-500">No sync events.</li>
           {% endfor %}
           {% endif %}
         </ul>
-      </div>
+      </article>
     </section>
   </div>
 </div>

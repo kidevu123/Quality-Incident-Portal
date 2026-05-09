@@ -1,10 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Nexus Resolve">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Nexus Resolve">
   <defs>
-    <linearGradient id="nx" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#7c3aed"/>
-      <stop offset="1" stop-color="#c026d3"/>
+    <linearGradient id="mark" x1="10" y1="8" x2="56" y2="58" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2563eb"/>
+      <stop offset=".52" stop-color="#7c3aed"/>
+      <stop offset="1" stop-color="#0f766e"/>
     </linearGradient>
   </defs>
-  <rect width="32" height="32" rx="8" fill="url(#nx)"/>
-  <path fill="#fff" d="M9 24V8h3.4l6.8 10.4V8H23v16h-3.3l-6.9-10.6V24H9z"/>
+  <rect width="64" height="64" rx="16" fill="#0f172a"/>
+  <path fill="url(#mark)" d="M16 13h13.5l18.5 29V13h6v38H40.5L22 22v29h-6V13z"/>
+  <path fill="#fff" d="M20 17h6.8l18.1 28.3V17H50v30H43.2L25.1 18.8V47H20V17z"/>
+  <path fill="#38bdf8" d="M45 45h9v6h-9z"/>
 </svg>

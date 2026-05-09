@@ -1,0 +1,281 @@
+/* Nexus Resolve — design system layer.
+   Loaded after Tailwind CDN so plain-element rules override the browser default.
+   Tailwind utility classes still drive layout/spacing — this file owns:
+     1. Design tokens (CSS variables, dark-mode aware)
+     2. Baseline rendering for unstyled HTML elements (Django `{{ field }}` output)
+     3. Polish: focus rings, scrollbars, animations
+*/
+
+:root {
+  --nx-bg: #f7f8fa;
+  --nx-bg-elev: #ffffff;
+  --nx-bg-muted: #f4f4f5;
+  --nx-border: rgb(228 228 231 / 0.85);
+  --nx-border-strong: rgb(212 212 216);
+  --nx-text: #18181b;
+  --nx-text-muted: #71717a;
+  --nx-text-subtle: #a1a1aa;
+  --nx-brand: #7c3aed;
+  --nx-brand-hover: #6d28d9;
+  --nx-brand-soft: #f5f3ff;
+  --nx-brand-on-soft: #5b21b6;
+  --nx-success: #059669;
+  --nx-warning: #d97706;
+  --nx-danger: #dc2626;
+  --nx-info: #0284c7;
+  --nx-ring: rgb(124 58 237 / 0.35);
+  --nx-shadow-card: 0 1px 2px 0 rgb(15 23 42 / 0.04), 0 4px 16px -6px rgb(15 23 42 / 0.08);
+  --nx-shadow-pop: 0 12px 32px -8px rgb(15 23 42 / 0.18), 0 2px 8px -2px rgb(15 23 42 / 0.06);
+}
+
+.dark {
+  --nx-bg: #09090b;
+  --nx-bg-elev: #18181b;
+  --nx-bg-muted: #27272a;
+  --nx-border: rgb(39 39 42 / 0.9);
+  --nx-border-strong: rgb(63 63 70);
+  --nx-text: #fafafa;
+  --nx-text-muted: #a1a1aa;
+  --nx-text-subtle: #71717a;
+  --nx-brand-soft: rgb(91 33 182 / 0.18);
+  --nx-brand-on-soft: #ddd6fe;
+  --nx-shadow-card: 0 1px 2px 0 rgb(0 0 0 / 0.45), 0 8px 24px -10px rgb(0 0 0 / 0.6);
+  --nx-shadow-pop: 0 18px 36px -10px rgb(0 0 0 / 0.65), 0 2px 6px -1px rgb(0 0 0 / 0.4);
+}
+
+/* Typography baseline */
+html {
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-text-size-adjust: 100%;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  font-synthesis: none;
+}
+
+/* Form elements — Django renders <input>/<textarea>/<select> with no classes by default.
+   These rules give them a consistent look without needing crispy-forms / widget-tweaks. */
+.nx-form input[type="text"],
+.nx-form input[type="email"],
+.nx-form input[type="password"],
+.nx-form input[type="search"],
+.nx-form input[type="tel"],
+.nx-form input[type="url"],
+.nx-form input[type="number"],
+.nx-form input[type="date"],
+.nx-form input[type="datetime-local"],
+.nx-form input[type="time"],
+.nx-form input:not([type]),
+.nx-form select,
+.nx-form textarea {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 0.625rem 0.875rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--nx-text);
+  background-color: var(--nx-bg-elev);
+  border: 1px solid var(--nx-border-strong);
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 2px 0 rgb(15 23 42 / 0.04);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  appearance: none;
+}
+
+.nx-form textarea {
+  min-height: 7rem;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.nx-form select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2371717a' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem;
+  padding-right: 2.5rem;
+}
+
+.nx-form input:focus,
+.nx-form select:focus,
+.nx-form textarea:focus {
+  outline: none;
+  border-color: var(--nx-brand);
+  box-shadow: 0 0 0 3px var(--nx-ring);
+}
+
+.nx-form input::placeholder,
+.nx-form textarea::placeholder {
+  color: var(--nx-text-subtle);
+}
+
+.nx-form input[type="file"] {
+  width: 100%;
+  font-size: 0.875rem;
+  color: var(--nx-text-muted);
+}
+
+.nx-form input[type="file"]::file-selector-button {
+  margin-right: 0.75rem;
+  padding: 0.5rem 0.875rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--nx-brand-on-soft);
+  background-color: var(--nx-brand-soft);
+  border: 0;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.nx-form input[type="file"]::file-selector-button:hover {
+  background-color: rgb(124 58 237 / 0.18);
+}
+
+.nx-form input[type="checkbox"],
+.nx-form input[type="radio"] {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--nx-brand);
+}
+
+.nx-form input[disabled],
+.nx-form select[disabled],
+.nx-form textarea[disabled] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.nx-form input[aria-invalid="true"],
+.nx-form select[aria-invalid="true"],
+.nx-form textarea[aria-invalid="true"] {
+  border-color: var(--nx-danger);
+}
+
+/* Focus ring for buttons and links — keyboard users get a visible target */
+:focus-visible {
+  outline: 2px solid var(--nx-brand);
+  outline-offset: 2px;
+  border-radius: 0.5rem;
+}
+
+button:focus-visible,
+[role="button"]:focus-visible,
+a:focus-visible {
+  outline-offset: 3px;
+}
+
+/* Scrollbar polish — only on overflow regions (not the whole page) */
+.nx-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--nx-border-strong) transparent;
+}
+
+.nx-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.nx-scroll::-webkit-scrollbar-thumb {
+  background-color: var(--nx-border-strong);
+  border-radius: 999px;
+}
+
+.nx-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Surfaces */
+.nx-card {
+  background-color: var(--nx-bg-elev);
+  border: 1px solid var(--nx-border);
+  border-radius: 1rem;
+  box-shadow: var(--nx-shadow-card);
+}
+
+.nx-divider {
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--nx-border-strong), transparent);
+}
+
+/* Auth/marketing hero gradient — only used on login + 403 + no_workspace */
+.nx-hero {
+  background:
+    radial-gradient(80% 60% at 80% 0%, rgb(124 58 237 / 0.12), transparent 60%),
+    radial-gradient(60% 50% at 0% 100%, rgb(14 165 233 / 0.08), transparent 60%),
+    var(--nx-bg);
+}
+
+.dark .nx-hero {
+  background:
+    radial-gradient(80% 60% at 80% 0%, rgb(124 58 237 / 0.18), transparent 60%),
+    radial-gradient(60% 50% at 0% 100%, rgb(14 165 233 / 0.12), transparent 60%),
+    var(--nx-bg);
+}
+
+/* Animations */
+@keyframes nxFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes nxPulse {
+  0%   { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
+@keyframes nxToastIn {
+  from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.nx-fade-in { animation: nxFadeIn 0.18s ease-out both; }
+.nx-toast   { animation: nxToastIn 0.22s cubic-bezier(0.4, 0, 0.2, 1) both; }
+
+.nx-skeleton {
+  background: linear-gradient(90deg, var(--nx-bg-muted) 25%, var(--nx-border) 37%, var(--nx-bg-muted) 63%);
+  background-size: 400% 100%;
+  animation: nxPulse 1.5s ease-in-out infinite;
+}
+
+/* Push subscribe button hidden state (kept from legacy) */
+[data-enable-push][data-push-hidden="true"] { display: none !important; }
+
+/* Bottom nav active marker */
+.nx-bnav-item[data-active="true"] {
+  color: var(--nx-brand);
+  background-color: var(--nx-brand-soft);
+}
+
+.nx-bnav-item[data-active="true"] .nx-bnav-icon {
+  color: var(--nx-brand);
+}
+
+/* Sidebar active link */
+.nx-snav-item[data-active="true"] {
+  background-color: var(--nx-text);
+  color: var(--nx-bg-elev);
+  box-shadow: 0 1px 2px 0 rgb(15 23 42 / 0.08);
+}
+
+.dark .nx-snav-item[data-active="true"] {
+  background-color: var(--nx-bg-elev);
+  color: var(--nx-text);
+}
+
+/* Print — hide nav and chrome */
+@media print {
+  .nx-no-print { display: none !important; }
+  .nx-card { box-shadow: none; border-color: #d4d4d8; }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .nx-fade-in,
+  .nx-toast,
+  .nx-skeleton {
+    animation: none !important;
+  }
+}

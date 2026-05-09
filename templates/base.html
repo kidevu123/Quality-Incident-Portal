@@ -1,14 +1,27 @@
-{% load static %}
-<!DOCTYPE html>
+{% load static %}<!DOCTYPE html>
 <html lang="en" class="h-full">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#7c3aed">
+  <meta name="color-scheme" content="light dark">
   <title>{% block title %}Nexus Resolve{% endblock %}</title>
   <link rel="icon" href="{% static 'favicon.svg' %}" type="image/svg+xml">
+  <link rel="manifest" href="{% url 'web_manifest' %}">
+  <link rel="apple-touch-icon" href="{% static 'brand/icon-192.png' %}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    // Set theme class before paint to avoid flash.
+    (function () {
+      try {
+        var stored = localStorage.getItem("theme");
+        var prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+        if (stored === "dark" || (!stored && prefersDark)) document.documentElement.classList.add("dark");
+      } catch (_e) {}
+    })();
+  </script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -16,64 +29,210 @@
       theme: {
         extend: {
           fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
-          boxShadow: {
-            'soft': '0 1px 2px 0 rgb(0 0 0 / 0.04), 0 8px 24px -4px rgb(0 0 0 / 0.08)',
+          colors: {
+            brand: {
+              50: '#f5f3ff', 100: '#ede9fe', 200: '#ddd6fe', 300: '#c4b5fd',
+              400: '#a78bfa', 500: '#8b5cf6', 600: '#7c3aed', 700: '#6d28d9',
+              800: '#5b21b6', 900: '#4c1d95', 950: '#2e1065',
+            },
           },
+          boxShadow: {
+            'soft': '0 1px 2px 0 rgb(15 23 42 / 0.04), 0 4px 16px -6px rgb(15 23 42 / 0.08)',
+            'pop': '0 12px 32px -8px rgb(15 23 42 / 0.18), 0 2px 8px -2px rgb(15 23 42 / 0.06)',
+          },
+          borderRadius: { '4xl': '2rem' },
+          maxWidth: { 'prose-narrow': '60ch' },
         },
       },
     };
   </script>
-  <style>
-    html { font-feature-settings: "cv02","cv03","cv04","cv11"; }
-    .skeleton { animation: pulse 1.5s ease-in-out infinite; background: linear-gradient(90deg,#f4f4f5 25%,#e4e4e7 37%,#f4f4f5 63%); background-size: 400% 100%; }
-    @keyframes pulse { 0%{background-position:100% 50%} 100%{background-position:0 50%} }
-  </style>
+  <link rel="stylesheet" href="{% static 'css/nexus.css' %}">
   {% block extra_head %}{% endblock %}
 </head>
 <body class="flex h-full min-h-screen min-w-0 flex-col touch-manipulation bg-zinc-50 text-zinc-900 antialiased dark:bg-zinc-950 dark:text-zinc-100">
   {% if messages %}
-  <div class="pointer-events-none fixed left-3 right-3 top-3 z-50 flex max-w-lg flex-col gap-2 sm:left-auto sm:right-4 sm:top-4">
+  <div class="pointer-events-none fixed inset-x-3 top-3 z-[60] flex flex-col gap-2 sm:left-auto sm:right-4 sm:top-4 sm:max-w-md" role="status" aria-live="polite">
     {% for message in messages %}
-    <div class="pointer-events-auto rounded-2xl border border-zinc-200/80 bg-white px-4 py-3 text-sm shadow-soft dark:border-zinc-800 dark:bg-zinc-900">
-      {{ message }}
+    <div class="nx-toast pointer-events-auto flex items-start gap-3 rounded-2xl border px-4 py-3 text-sm shadow-pop
+      {% if 'error' in message.tags %}border-rose-200 bg-rose-50 text-rose-900 dark:border-rose-900/60 dark:bg-rose-950/70 dark:text-rose-100
+      {% elif 'success' in message.tags %}border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-900/60 dark:bg-emerald-950/70 dark:text-emerald-100
+      {% elif 'warning' in message.tags %}border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/70 dark:text-amber-100
+      {% else %}border-zinc-200 bg-white text-zinc-800 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100{% endif %}">
+      <span class="mt-0.5 shrink-0">
+        {% if 'error' in message.tags %}{% include "components/_icon.html" with name="alert" class="h-4 w-4" %}
+        {% elif 'success' in message.tags %}{% include "components/_icon.html" with name="check" class="h-4 w-4" %}
+        {% elif 'warning' in message.tags %}{% include "components/_icon.html" with name="alert" class="h-4 w-4" %}
+        {% else %}{% include "components/_icon.html" with name="info" class="h-4 w-4" %}{% endif %}
+      </span>
+      <span class="min-w-0 flex-1">{{ message }}</span>
     </div>
     {% endfor %}
   </div>
   {% endif %}
+
   <div class="flex flex-1 flex-col">
   {% block body %}{% endblock %}
   </div>
-  <footer class="mt-auto border-t border-zinc-200/80 bg-white/80 px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] text-center text-xs text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950/80 dark:text-zinc-400">
-    <p class="font-medium text-zinc-600 dark:text-zinc-300">Made with love — Haute Brands</p>
-    <p class="mt-1 tabular-nums text-zinc-400 dark:text-zinc-500">Nexus Resolve v{{ nexus_app_version }}</p>
+
+  {% block footer %}
+  <footer class="nx-no-print mt-auto border-t border-zinc-200/80 bg-white/80 px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] text-center text-xs text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950/80 dark:text-zinc-400">
+    <p class="font-medium text-zinc-600 dark:text-zinc-300">Made with care · Haute Brands</p>
+    <p class="mt-0.5 tabular-nums text-zinc-400 dark:text-zinc-500">Nexus Resolve · v{{ nexus_app_version }}</p>
   </footer>
-  <div id="cmdk" class="hidden fixed inset-0 z-[100] items-start justify-center bg-black/40 px-3 pt-16 backdrop-blur-sm sm:pt-24" role="dialog">
-    <div class="w-full max-w-lg rounded-2xl border border-zinc-200 bg-white p-2 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900">
-      <input id="cmdk-input" type="search" placeholder="Quick actions…" class="w-full rounded-xl border-0 bg-zinc-50 px-4 py-3 text-sm outline-none ring-1 ring-zinc-200 focus:ring-2 focus:ring-violet-500 dark:bg-zinc-950 dark:ring-zinc-800" autocomplete="off">
-      <ul class="mt-2 max-h-72 overflow-auto text-sm">
-        <li><a data-cmdk href="{% url 'support_inbox' %}" class="block rounded-xl px-3 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-800">Inbox</a></li>
-        <li><a data-cmdk href="{% url 'executive_dashboard' %}" class="block rounded-xl px-3 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-800">Executive dashboard</a></li>
-        <li><a data-cmdk href="{% url 'portal_home' %}" class="block rounded-xl px-3 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-800">Distributor portal</a></li>
-        <li><a data-cmdk href="/admin/" class="block rounded-xl px-3 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-800">Admin configuration</a></li>
+  {% endblock %}
+
+  {# Command palette — Cmd/Ctrl+K #}
+  <div id="cmdk" class="hidden fixed inset-0 z-[100] items-start justify-center bg-zinc-900/50 px-3 pt-16 backdrop-blur-sm sm:pt-24" role="dialog" aria-modal="true" aria-label="Quick actions">
+    <div class="nx-fade-in w-full max-w-lg rounded-2xl border border-zinc-200 bg-white p-2 shadow-pop dark:border-zinc-800 dark:bg-zinc-900">
+      <div class="relative">
+        <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400">
+          {% include "components/_icon.html" with name="search" class="h-4 w-4" %}
+        </span>
+        <input id="cmdk-input" type="search" placeholder="Search actions… (Esc to close)" class="w-full rounded-xl border-0 bg-zinc-50 py-3 pl-10 pr-4 text-sm outline-none ring-1 ring-zinc-200 focus:ring-2 focus:ring-violet-500 dark:bg-zinc-950 dark:ring-zinc-800" autocomplete="off">
+      </div>
+      <ul class="nx-scroll mt-2 max-h-72 overflow-auto text-sm" role="listbox">
+        {% if request.user.is_authenticated %}
+        {% if request.user.is_staff_role or request.user.is_superuser %}
+        <li><a data-cmdk href="{% url 'support_inbox' %}" class="flex items-center gap-3 rounded-xl px-3 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-800">{% include "components/_icon.html" with name="inbox" class="h-4 w-4 text-zinc-400" %}<span>Inbox</span></a></li>
+        <li><a data-cmdk href="{% url 'executive_dashboard' %}" class="flex items-center gap-3 rounded-xl px-3 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-800">{% include "components/_icon.html" with name="chart" class="h-4 w-4 text-zinc-400" %}<span>Executive dashboard</span></a></li>
+        {% endif %}
+        <li><a data-cmdk href="{% url 'notifications' %}" class="flex items-center gap-3 rounded-xl px-3 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-800">{% include "components/_icon.html" with name="bell" class="h-4 w-4 text-zinc-400" %}<span>Notifications</span>{% if unread_notification_count %}<span class="ml-auto rounded-full bg-violet-600 px-2 py-0.5 text-[10px] font-bold text-white">{{ unread_notification_count }}</span>{% endif %}</a></li>
+        <li><a data-cmdk href="{% url 'portal_home' %}" class="flex items-center gap-3 rounded-xl px-3 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-800">{% include "components/_icon.html" with name="home" class="h-4 w-4 text-zinc-400" %}<span>Distributor portal</span></a></li>
+        <li><a data-cmdk href="{% url 'portal_claim_submit' %}" class="flex items-center gap-3 rounded-xl px-3 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-800">{% include "components/_icon.html" with name="plus" class="h-4 w-4 text-zinc-400" %}<span>New claim</span></a></li>
+        <li><a data-cmdk href="/admin/" class="flex items-center gap-3 rounded-xl px-3 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-800">{% include "components/_icon.html" with name="settings" class="h-4 w-4 text-zinc-400" %}<span>Admin configuration</span></a></li>
+        <li class="my-1 border-t border-zinc-100 dark:border-zinc-800"></li>
+        <li><button type="button" data-cmdk-action="toggle-theme" class="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left hover:bg-zinc-100 dark:hover:bg-zinc-800">{% include "components/_icon.html" with name="moon" class="h-4 w-4 text-zinc-400" %}<span>Toggle theme</span></button></li>
+        <li><a data-cmdk href="{% url 'logout' %}" class="flex items-center gap-3 rounded-xl px-3 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-800">{% include "components/_icon.html" with name="log-out" class="h-4 w-4 text-zinc-400" %}<span>Sign out</span></a></li>
+        {% else %}
+        <li><a data-cmdk href="{% url 'login' %}" class="flex items-center gap-3 rounded-xl px-3 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-800">{% include "components/_icon.html" with name="user" class="h-4 w-4 text-zinc-400" %}<span>Sign in</span></a></li>
+        {% endif %}
       </ul>
     </div>
   </div>
+
   <script>
     (function () {
-      const root = document.documentElement;
-      const cmdk = document.getElementById('cmdk');
-      const input = document.getElementById('cmdk-input');
-      function toggleDark() { root.classList.toggle('dark'); localStorage.setItem('theme', root.classList.contains('dark') ? 'dark' : 'light'); }
-      if (localStorage.getItem('theme') === 'dark') root.classList.add('dark');
-      window.addEventListener('keydown', function (e) {
-        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); cmdk.classList.remove('hidden'); cmdk.classList.add('flex'); input.focus(); }
-        if (e.key === 'Escape') { cmdk.classList.add('hidden'); cmdk.classList.remove('flex'); }
+      var root = document.documentElement;
+      var cmdk = document.getElementById("cmdk");
+      var input = document.getElementById("cmdk-input");
+      function setTheme(t) {
+        if (t === "dark") root.classList.add("dark"); else root.classList.remove("dark");
+        try { localStorage.setItem("theme", t); } catch (_e) {}
+      }
+      window.nexusToggleDark = function () { setTheme(root.classList.contains("dark") ? "light" : "dark"); };
+      function openCmdk() { cmdk.classList.remove("hidden"); cmdk.classList.add("flex"); input.focus(); input.select(); }
+      function closeCmdk() { cmdk.classList.add("hidden"); cmdk.classList.remove("flex"); }
+      window.addEventListener("keydown", function (e) {
+        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); openCmdk(); }
+        if (e.key === "Escape" && !cmdk.classList.contains("hidden")) closeCmdk();
       });
-      cmdk.addEventListener('click', function (ev) { if (ev.target === cmdk) { cmdk.classList.add('hidden'); cmdk.classList.remove('flex'); } });
-      document.querySelectorAll('[data-cmdk]').forEach(function (a) { a.addEventListener('click', function () { cmdk.classList.add('hidden'); cmdk.classList.remove('flex'); }); });
-      window.nexusToggleDark = toggleDark;
+      cmdk.addEventListener("click", function (ev) { if (ev.target === cmdk) closeCmdk(); });
+      document.querySelectorAll("[data-cmdk]").forEach(function (a) {
+        a.addEventListener("click", closeCmdk);
+      });
+      var themeAction = cmdk.querySelector("[data-cmdk-action='toggle-theme']");
+      if (themeAction) themeAction.addEventListener("click", function () { window.nexusToggleDark(); closeCmdk(); });
+      input.addEventListener("input", function () {
+        var q = input.value.trim().toLowerCase();
+        cmdk.querySelectorAll("li[role], li").forEach(function (li) {
+          var content = li.textContent.toLowerCase();
+          if (li.classList.contains("border-t")) return;
+          li.style.display = q && content.indexOf(q) === -1 ? "none" : "";
+        });
+      });
     })();
   </script>
+
+  {% if request.user.is_authenticated %}
+  <script>
+    (function () {
+      var buttonSelector = "[data-enable-push]";
+      function getCookie(name) {
+        var parts = document.cookie.split(";").map(function (part) { return part.trim(); });
+        for (var i = 0; i < parts.length; i += 1) {
+          if (parts[i].indexOf(name + "=") === 0) return decodeURIComponent(parts[i].slice(name.length + 1));
+        }
+        return "";
+      }
+      function setButtons(text, disabled, hidden) {
+        document.querySelectorAll(buttonSelector).forEach(function (btn) {
+          // Only update text content if the button has a text label child (skip icon-only buttons)
+          var label = btn.querySelector("[data-push-label]");
+          if (label) label.textContent = text;
+          else if (btn.children.length === 0) btn.textContent = text;
+          btn.disabled = !!disabled;
+          btn.classList.toggle("opacity-60", !!disabled);
+          btn.setAttribute("data-push-hidden", hidden ? "true" : "false");
+        });
+      }
+      function hideButtons() { setButtons("Notifications on", true, true); }
+      function urlBase64ToUint8Array(base64String) {
+        var padding = "=".repeat((4 - base64String.length % 4) % 4);
+        var base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+        var rawData = window.atob(base64);
+        var outputArray = new Uint8Array(rawData.length);
+        for (var i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
+        return outputArray;
+      }
+      function postSubscription(url, subscription) {
+        return fetch(url, {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json", "X-CSRFToken": getCookie("csrftoken") },
+          body: JSON.stringify(subscription)
+        });
+      }
+      function enablePush() {
+        if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
+          setButtons("Push unavailable", true, false); return;
+        }
+        if (!window.isSecureContext) { setButtons("HTTPS required", true, false); return; }
+        setButtons("Turning on…", true, false);
+        fetch("{% url 'push_config' %}", { credentials: "same-origin" })
+          .then(function (res) { return res.json(); })
+          .then(function (config) {
+            if (!config.enabled || !config.publicKey) throw new Error("Push not configured.");
+            return navigator.serviceWorker.register("{% url 'service_worker' %}").then(function (registration) {
+              return Notification.requestPermission().then(function (permission) {
+                if (permission !== "granted") throw new Error("Permission denied.");
+                return registration.pushManager.getSubscription().then(function (existing) {
+                  return existing || registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array(config.publicKey)
+                  });
+                });
+              });
+            });
+          })
+          .then(function (subscription) { return postSubscription("{% url 'push_subscribe' %}", subscription); })
+          .then(hideButtons)
+          .catch(function () { setButtons("Enable notifications", false, false); });
+      }
+      function refreshPushPrompt() {
+        document.querySelectorAll(buttonSelector).forEach(function (btn) { btn.setAttribute("data-push-hidden", "true"); });
+        if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
+          setButtons("Push unavailable", true, false); return;
+        }
+        if (!window.isSecureContext) { setButtons("HTTPS required", true, false); return; }
+        navigator.serviceWorker.register("{% url 'service_worker' %}")
+          .then(function (registration) { return registration.pushManager.getSubscription(); })
+          .then(function (subscription) {
+            if (subscription) { hideButtons(); return; }
+            if (Notification.permission === "denied") setButtons("Notifications blocked", true, false);
+            else setButtons("Enable notifications", false, false);
+          })
+          .catch(function () { setButtons("Enable notifications", false, false); });
+      }
+      document.addEventListener("click", function (event) {
+        var btn = event.target.closest(buttonSelector);
+        if (!btn) return;
+        event.preventDefault();
+        enablePush();
+      });
+      refreshPushPrompt();
+    })();
+  </script>
+  {% endif %}
   {% block extra_js %}{% endblock %}
 </body>
 </html>
